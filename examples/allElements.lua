@@ -2,7 +2,6 @@ local ui = require("ui")
 require("canvas")
 local program_config = {
     Running = true;
-    searchBar = "";
 }
 
 ----EXAMPLES HERE-----
