@@ -66,10 +66,10 @@ end
 
 function BetterElements:newCheckBox(canvas,tbl)
     if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'newButton' (table expected, got "..type(tbl)..")")
+        error("TypeError: bad argument #1 to 'newCheckBox' (table expected, got "..type(tbl)..")")
     end
     if canvas.type ~= "BetterElement_Canvas" then
-        error("TypeError: bad argument #1 to 'newButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
+        error("TypeError: bad argument #1 to 'newCheckBox' (BetterElement_Canvas expected, got "..type(canvas)..")")
     end
     local checkbox = {}
     checkbox.name = tbl.name or randomName()
@@ -93,10 +93,10 @@ end
 
 function BetterElements:newLabel(canvas,tbl)
     if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'newButton' (table expected, got "..type(tbl)..")")
+        error("TypeError: bad argument #1 to 'newLabel' (table expected, got "..type(tbl)..")")
     end
     if canvas.type ~= "BetterElement_Canvas" then
-        error("TypeError: bad argument #1 to 'newButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
+        error("TypeError: bad argument #1 to 'newLabel' (BetterElement_Canvas expected, got "..type(canvas)..")")
     end
     local label = {}
     label.name = tbl.name or randomName()
@@ -127,10 +127,10 @@ end
 
 function BetterElements:newIconButton(canvas,tbl)
     if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'newButton' (table expected, got "..type(tbl)..")")
+        error("TypeError: bad argument #1 to 'newIconButton' (table expected, got "..type(tbl)..")")
     end
     if canvas.type ~= "BetterElement_Canvas" then
-        error("TypeError: bad argument #1 to 'newButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
+        error("TypeError: bad argument #1 to 'newIconButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
     end
     local iconbutton = {}
     iconbutton.name = tbl.name or randomName()
@@ -155,16 +155,16 @@ function BetterElements:newIconButton(canvas,tbl)
     return iconbutton
 end
 
-function BetterElements:newFrame(canvas,tbl)
+function BetterElements:newFrame(canvas, tbl)
     if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'newButton' (table expected, got "..type(tbl)..")")
+        error("TypeError: bad argument #1 to 'newFrame' (table expected, got "..type(tbl)..")")
     end
     if canvas.type ~= "BetterElement_Canvas" then
-        error("TypeError: bad argument #1 to 'newButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
+        error("TypeError: bad argument #1 to 'newFrame' (BetterElement_Canvas expected, got "..type(canvas)..")")
     end
+
     local frame = {}
     frame.name = tbl.name or randomName()
-    frame.x,frame.y = tbl.x or 0,tbl.y or 0
     frame.width = tbl.width or 0
     frame.height = tbl.height or 0
     frame.radius = tbl.radius or 0
@@ -177,27 +177,33 @@ function BetterElements:newFrame(canvas,tbl)
     frame.onLeave = tbl.onLeave or function() end
     frame.onClick = tbl.onClick or function() end
     frame.childs = tbl.childs or {}
+
+    local originalPositionOfChild = {}
     function frame:addChild(element)
         if not element.type then
             error("TypeError: bad argument #1 to 'newFrame' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
         else
             table.insert(frame.childs,element)
+            originalPositionOfChild[element] = {x = element.x, y = element.y}
             local value = element
             local positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY = value.x + frame.x, value.y + frame.y
             value.x, value.y = positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY
         end
     end
+
     function frame:removeChild(element)
         if not element.type then
             error("TypeError: bad argument #1 to 'newFrame' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
         else
             for i, v in ipairs(frame.childs) do
                 if v == element then
-                    table.remove(frame.childs,i)
+                    table.remove(frame.childs, i)
+                    table.remove(originalPositionOfChild, element)
                 end
             end
         end
     end
+
     local function checkIfAlreadyIsAChild(element)
         for i, v in ipairs(frame.childs) do
             if v == element then
@@ -207,30 +213,55 @@ function BetterElements:newFrame(canvas,tbl)
         return false
     end
 
-
     for i, v in ipairs(frame.childs) do
         if not v.type then
             error("TypeError: bad argument #1 to 'newFrame' (BetterElement_ELEMENT expected for child, got " .. type(v) .. ")")
         else
             if not checkIfAlreadyIsAChild(v) then
-            local positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY = v.x + frame.x, v.y + frame.y
-            v.x, v.y = positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY
+                local positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY = v.x + frame.x, v.y + frame.y
+                v.x, v.y = positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY
+            end
         end
     end
-    end
 
-    frame.isMouseHovering = false;
+    frame.isMouseHovering = false
     frame.type = "BetterElement_Frame"
-    table.insert(elements,frame)
+
+    local frame_data = { x = tbl.x or 0, y = tbl.y or 0 }
+    
+    local metatable = {
+        __index = function(t, k)
+            return frame_data[k]
+        end,
+        __newindex = function(t, k, v)
+            if k == "x"  then
+                frame_data[k] = v
+                for ab,ba in pairs(frame.childs) do
+                    local relativeXOfChild = originalPositionOfChild[ba].x
+                    frame.childs[ab].x = v + relativeXOfChild
+                end
+            elseif k == "y" then
+                frame_data[k] = v
+                for ab,ba in pairs(frame.childs) do
+                    local relativeYOfChild = originalPositionOfChild[ba].y
+                    frame.childs[ab].y = v + relativeYOfChild
+                end
+            else
+                rawset(t, k, v)
+            end
+        end
+    }
+    setmetatable(frame, metatable)
+    table.insert(elements, frame)
     return frame
 end
 
 function BetterElements:newLoadBar(canvas,tbl)
     if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'newButton' (table expected, got "..type(tbl)..")")
+        error("TypeError: bad argument #1 to 'newLoadBar' (table expected, got "..type(tbl)..")")
     end
     if canvas.type ~= "BetterElement_Canvas" then
-        error("TypeError: bad argument #1 to 'newButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
+        error("TypeError: bad argument #1 to 'newLoadBar' (BetterElement_Canvas expected, got "..type(canvas)..")")
     end
     local loadbar = {}
     loadbar.name = tbl.name or randomName()
@@ -259,10 +290,10 @@ end
 
 function BetterElements:newRotatedLoadBar(canvas,tbl)
     if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'newButton' (table expected, got "..type(tbl)..")")
+        error("TypeError: bad argument #1 to 'newRotatedLoadBar' (table expected, got "..type(tbl)..")")
     end
     if canvas.type ~= "BetterElement_Canvas" then
-        error("TypeError: bad argument #1 to 'newButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
+        error("TypeError: bad argument #1 to 'newRotatedLoadBar' (BetterElement_Canvas expected, got "..type(canvas)..")")
     end
     local loadbar = {}
     loadbar.name = tbl.name or randomName()
@@ -343,6 +374,13 @@ function BetterElements:newCanvas(window,tbl)
     canvas.bgcolor = tbl.bgcolor or 0x000000FF
     canvas.type = "BetterElement_Canvas"
     canvas:show()
+
+    local function updateChildsOfFrame(frame)
+        for i, v in ipairs(frame.childs) do
+            local positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY = v.x + frame.x, v.y + frame.y
+            v.x, v.y = positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY
+        end
+    end
     function canvas:onPaint()
         module_config.extraOnPaintFunc(elements)
         self:clear(canvas.bgcolor)
