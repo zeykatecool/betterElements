@@ -1,4 +1,4 @@
-# Better Elements for <font color="#004080">Lua</font><font color="#efb42c">RT</font>
+# Better Elements for LuaRT
 - This module is made for making better elements for `LuaRT`.
 - It uses `canvas` module for creating new and better elements.
 
@@ -14,7 +14,7 @@
 
 > 💡 Tip: CheckBoxes can be used like RadioButtons.
 
-> ⚠️ Warning: Border is not an actual Element.It attaches to the Elements.
+> ⚠️ Warning: `Border` is not actual Element.It attaches to the Elements.
 
 >Example:
 ```lua
@@ -46,11 +46,11 @@ local newBorder = betterElements:setBorder(checkBox,{
 > ⚠️ Warning: IconButton icons need to be `32x32` for better results.
 
 # Installation
-- Just download `betterElements.lua` and require it from your lua file.
+- Just download [betterElements.lua](https://github.com/zeykatecool/betterElements/blob/main/betterElements.lua) and require it from your lua file.
 
 # How to use
-- Check `examples` folder for examples.
-> 📝 Information: Check `screenshots` folder to see difference between BetterElements and standart Elements.
+- Check [examples](https://github.com/zeykatecool/betterElements/tree/main/examples) folder for examples.
+> 📝 Information: Check [screenshots](https://github.com/zeykatecool/betterElements/tree/main/screenshots) folder to see difference between BetterElements and standart Elements.
 
 
 > ⚠️ Warning: Try to not create more than one `Canvas` at the same time.You can use `BetterElements:addToPaint(func)` function to add function to paint process.If you need other elements for canvas just create it from there or just edit the original `betterElements.lua` file.
@@ -58,4 +58,4 @@ local newBorder = betterElements:setBorder(checkBox,{
 > ⚠️ Warning: If you are creating standart Elements,don't forget to add `(element):tofront()` for making them visible.
 
 # Contact
-- You can contact me from [<font color="#004080">Lua</font><font color="#efb42c">RT</font> Discord Community Server](https://discord.gg/aAZ7jAVMC5).
+- You can contact me from [LuaRT Discord Community Server](https://discord.gg/aAZ7jAVMC5).
