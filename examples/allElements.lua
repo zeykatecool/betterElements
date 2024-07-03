@@ -2,22 +2,25 @@ local ui = require("ui")
 require("canvas")
 local program_config = {
     Running = true;
+    searchBar = "";
 }
 
-local mainWindow = ui.Window("betterElements","raw",270,200)
+----EXAMPLES HERE-----
+
+local mainWindow = ui.Window("ZEN","raw",750,600)
 mainWindow.bgcolor = 0x242424
 mainWindow:center() mainWindow:show()
+local function print(...)
+    mainWindow:status(...)
+end
 
------EXAMPLES STARTS FROM HERE-----
 
 local betterElements = require("betterElements")
 
---Creating new BetterElement_Canvas
 local canvas = betterElements:newCanvas(mainWindow,{
     bgcolor = 0x242424;
 })
 
---Adding new frame
 local frame = betterElements:newFrame(canvas,{
     x = 10;
     y = 10;
@@ -29,7 +32,6 @@ local frame = betterElements:newFrame(canvas,{
     childs = {}
 })
 
---Adding new button
 local button = betterElements:newButton(canvas,{
     x = 10;
     y = 18;
@@ -44,7 +46,6 @@ local button = betterElements:newButton(canvas,{
     visible = true;
 })
 
---Adding new checkBox
 local checkBox = betterElements:newCheckBox(canvas,{
     x = 135;
     y = 15;
@@ -57,7 +58,6 @@ local checkBox = betterElements:newCheckBox(canvas,{
     visible = true;
 })
 
---Adding new checkBox
 local checkBox2 = betterElements:newCheckBox(canvas,{
     x = 170;
     y = 15;
@@ -70,7 +70,6 @@ local checkBox2 = betterElements:newCheckBox(canvas,{
     visible = true;
 })
 
---Adding new label
 local label = betterElements:newLabel(canvas,{
     x = 10;
     y = 60;
@@ -83,7 +82,6 @@ local label = betterElements:newLabel(canvas,{
     visible = true;
 })
 
---Adding new loadBar
 local loadBar = betterElements:newLoadBar(canvas,{
     x = 10;
     y = 100;
@@ -97,7 +95,6 @@ local loadBar = betterElements:newLoadBar(canvas,{
     userCanChange = true;
 })
 
---Adding new iconButton
 local iconButton = betterElements:newIconButton(canvas,{
     x = 10;
     y = 130;
@@ -110,7 +107,19 @@ local iconButton = betterElements:newIconButton(canvas,{
     cursorSet = true;
 })
 
---Adding all elements to frame
+local rotatedLoadBar = betterElements:newRotatedLoadBar(canvas,{
+    x = 270;
+    y = 10;
+    width = 10;
+    height = 180;
+    radius = 5;
+    color = 0x5395faFF;
+    bgcolor = 0xEAEDF6FF;
+    percent = 0;
+    visible = true;
+    userCanChange = true;
+})
+
 frame:addChild(button)
 frame:addChild(checkBox)
 frame:addChild(checkBox2)
@@ -118,12 +127,16 @@ frame:addChild(label)
 frame:addChild(loadBar)
 frame:addChild(iconButton)
 
-
---Adding new border to checBbox
 local newBorder = betterElements:setBorder(checkBox,{
     color = 0x000000FF;
     thickness = 1;
 })
+
+betterElements:setBorder(rotatedLoadBar,{
+    color = 0xFFFFFFFF;
+    thickness = 3;
+})
+
 
 
 function mainWindow:onClose()
