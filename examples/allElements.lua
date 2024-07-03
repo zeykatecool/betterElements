@@ -4,7 +4,7 @@ local program_config = {
     Running = true;
 }
 
-----EXAMPLES HERE-----
+
 
 local mainWindow = ui.Window("ZEN","raw",750,600)
 mainWindow.bgcolor = 0x242424
@@ -53,7 +53,7 @@ local checkBox = betterElements:newCheckBox(canvas,{
     radius = 25;
     checkedColor = 0x5395faFF;
     color = 0xEAEDF6FF;
-    checkerThickness = 10;
+    checkerThickness = 15;
     visible = true;
 })
 
@@ -65,7 +65,7 @@ local checkBox2 = betterElements:newCheckBox(canvas,{
     radius = 25;
     checkedColor = 0x5395faFF;
     color = 0xEAEDF6FF;
-    checkerThickness = 10;
+    checkerThickness = 15;
     visible = true;
 })
 
@@ -119,6 +119,7 @@ local rotatedLoadBar = betterElements:newRotatedLoadBar(canvas,{
     userCanChange = true;
 })
 
+
 frame:addChild(button)
 frame:addChild(checkBox)
 frame:addChild(checkBox2)
@@ -135,7 +136,6 @@ betterElements:setBorder(rotatedLoadBar,{
     color = 0xFFFFFFFF;
     thickness = 3;
 })
-
 
 
 function mainWindow:onClose()
