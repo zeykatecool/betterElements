@@ -9,6 +9,7 @@
 + `Label`
 + `IconButton`
 + `LoadBar`
++ `RotatedLoadBar`
 + `Frame`
 + `Border`
 
