@@ -6,7 +6,7 @@ local mainWindow = nil
 
 local module_config = {
     drawingAll = false;
-    extraOnPaintFunc = function(element) end;
+    extraOnPaintFunc = function(elements) end;
     isHoverChangingMouseCursor = {
         changer = nil;
         changing = false;
@@ -256,6 +256,38 @@ function BetterElements:newLoadBar(canvas,tbl)
     return loadbar
 end
 
+function BetterElements:newRotatedLoadBar(canvas,tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'newButton' (table expected, got "..type(tbl)..")")
+    end
+    if canvas.type ~= "BetterElement_Canvas" then
+        error("TypeError: bad argument #1 to 'newButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
+    end
+    local loadbar = {}
+    loadbar.name = tbl.name or randomName()
+    loadbar.x,loadbar.y = tbl.x or 0,tbl.y or 0
+    loadbar.width = tbl.width or 0
+    loadbar.height = tbl.height or 0
+    loadbar.radius = tbl.radius or 0
+    loadbar.bgcolor = tbl.bgcolor or 0x000000FF
+    loadbar.color = tbl.color or 0xFFFFFFFF
+    if tbl.visible == nil then
+        tbl.visible = true
+    end
+    loadbar.visible = tbl.visible
+    loadbar.percent = tbl.percent or 0
+    loadbar.onHover = tbl.onHover or function() end
+    loadbar.onLeave = tbl.onLeave or function() end
+    loadbar.onClick = tbl.onClick or function() end
+    loadbar.onChanged = tbl.onChanged or function() end
+
+    loadbar.userCanChange = tbl.userCanChange or false;
+    loadbar.userChanging = false;
+    loadbar.type = "BetterElement_RotatedLoadBar"
+    table.insert(elements,loadbar)
+    return loadbar
+end
+
 function BetterElements:setBorder(element,tbl)
     if type(tbl) ~= "table" then
         error("TypeError: bad argument #1 to 'setBorder' (table expected, got "..type(tbl)..")")
@@ -411,11 +443,30 @@ function BetterElements:newCanvas(window,tbl)
                     drawRectangle(canvas, v.x, v.y, widthAccordingToPercent, height, v.radius, v.radius, v.color)
                 end
             end
+            if v.type == "BetterElement_RotatedLoadBar" then
+                if v.visible then
+                    if v.border then
+                        if  v.border.visible then
+                        drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+                    end
+                end
+                drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
+                local percent = v.percent / 100 
+                local heightAccordingToPercent = v.height * percent
+                local yStart = v.y + (v.height - heightAccordingToPercent)
+                drawRectangle(canvas, v.x, yStart, v.width, heightAccordingToPercent, v.radius, v.radius, v.color)
+                end
+            end
         end
     end
     function canvas:onMouseUp()
         for k,v in pairs(elements) do
             if v.type == "BetterElement_LoadBar" then
+                if v.visible then
+                    v.userChanging = false
+                end
+            end
+            if v.type == "BetterElement_RotatedLoadBar" then
                 if v.visible then
                     v.userChanging = false
                 end
@@ -448,6 +499,17 @@ function BetterElements:newCanvas(window,tbl)
                 end
             end
             if v.type == "BetterElement_LoadBar" then
+                if v.visible then
+                    local mousex, mousey = ui.mousepos()
+                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                        v.onClick()
+                        if v.userCanChange then
+                            v.userChanging = true
+                        end
+                    end
+                end
+            end
+            if v.type == "BetterElement_RotatedLoadBar" then
                 if v.visible then
                     local mousex, mousey = ui.mousepos()
                     if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
@@ -544,6 +606,29 @@ function BetterElements:newCanvas(window,tbl)
                             if v.isMouseHovering then
                             v.onLeave()
                             v.isMouseHovering = false;
+                            end
+                        end
+                    end
+                elseif v.type == "BetterElement_RotatedLoadBar" then
+                    if v.visible then
+                        if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                            v.onHover()
+                            v.isMouseHovering = true
+                            if v.userChanging then
+                                if mainWindow then
+                                    local winY = mainWindow.y
+                                    local relativeMouseY = mousey - winY
+                                    local relativeY = relativeMouseY - v.y
+                                    local inverseRelativeY = v.height - relativeY
+                                    v.percent = math.max(0, math.min((inverseRelativeY / v.height) * 100, 100))
+                                    v.percent = math.floor(v.percent)
+                                    v.onChanged()
+                                end
+                            end
+                        else
+                            if v.isMouseHovering then
+                                v.onLeave()
+                                v.isMouseHovering = false
                             end
                         end
                     end
