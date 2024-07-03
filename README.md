@@ -1,5 +1,5 @@
 # Better Elements for LuaRT
-- This module is made for making better elements for `LuaRT`.
+- This module is made for making better elements for [LuaRT](https://github.com/samyeyo/LuaRT/tree/v1.8.0).
 - It uses `canvas` module for creating new and better elements.
 
 # Features
