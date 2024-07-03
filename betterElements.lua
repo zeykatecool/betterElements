@@ -175,6 +175,7 @@ function BetterElements:newFrame(canvas,tbl)
     frame.visible = tbl.visible
     frame.onHover = tbl.onHover or function() end
     frame.onLeave = tbl.onLeave or function() end
+    frame.onClick = tbl.onClick or function() end
     frame.childs = tbl.childs or {}
     function frame:addChild(element)
         if not element.type then
@@ -475,6 +476,14 @@ function BetterElements:newCanvas(window,tbl)
     end
     function canvas:onClick()
         for k,v in pairs(elements) do
+            if v.type == "BetterElement_Frame" then
+                if v.visible then
+                    local mousex, mousey = ui.mousepos()
+                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                        v.onClick()
+                    end
+                end
+            end
             if v.type == "BetterElement_Button" then
                 local mousex,mousey = ui.mousepos()
                 if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
