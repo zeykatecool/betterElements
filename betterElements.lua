@@ -6,7 +6,7 @@ local mainWindow = nil
 
 local module_config = {
     drawingAll = false;
-    extraOnPaintFunc = function(elements) end;
+    extraOnPaintFunc = function(element) end;
     isHoverChangingMouseCursor = {
         changer = nil;
         changing = false;
