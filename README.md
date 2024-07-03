@@ -14,7 +14,7 @@
 
 > 💡 Tip: CheckBoxes can be used like RadioButtons.
 
-> ⚠️ Warning: `Border` is not actual Element.It attaches to the Elements.
+> ⚠️ Warning: `Border` is not actual Element.It attaches to Elements.
 
 >Example:
 ```lua
