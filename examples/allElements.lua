@@ -1,3 +1,4 @@
+local tween = require("modules.tween")
 local ui = require("ui")
 require("canvas")
 local program_config = {
@@ -5,12 +6,11 @@ local program_config = {
 }
 
 
-
 local mainWindow = ui.Window("ZEN","raw",750,600)
 mainWindow.bgcolor = 0x242424
 mainWindow:center() mainWindow:show()
 local function print(...)
-    mainWindow:status(...)
+    require("console").writeln(...)
 end
 
 
@@ -18,6 +18,19 @@ local betterElements = require("betterElements")
 
 local canvas = betterElements:newCanvas(mainWindow,{
     bgcolor = 0x242424;
+})
+
+local rotatedLoadBar = betterElements:newRotatedLoadBar(canvas,{
+    x = 270;
+    y = 10;
+    width = 10;
+    height = 180;
+    radius = 5;
+    color = 0x5395faFF;
+    bgcolor = 0xEAEDF6FF;
+    percent = 0;
+    visible = true;
+    userCanChange = true;
 })
 
 local frame = betterElements:newFrame(canvas,{
@@ -29,20 +42,6 @@ local frame = betterElements:newFrame(canvas,{
     bgcolor = 0xC9C9C9FF;
     visible = true;
     childs = {}
-})
-
-local button = betterElements:newButton(canvas,{
-    x = 10;
-    y = 18;
-    width = 110;
-    height = 25;
-    radius = 7;
-    textcolor = 0x5395faFF;
-    fontsize = 14;
-    color = 0xEAEDF6FF;
-    cursorSet = true;
-    text = "Button";
-    visible = true;
 })
 
 local checkBox = betterElements:newCheckBox(canvas,{
@@ -73,7 +72,7 @@ local label = betterElements:newLabel(canvas,{
     x = 10;
     y = 60;
     text = "Better Elements";
-    font = "Consolas";
+    font = "Segoe UI";
     fontweight = 200;
     fontstyle = "normal";
     fontsize = 28;
@@ -82,7 +81,7 @@ local label = betterElements:newLabel(canvas,{
 })
 
 local loadBar = betterElements:newLoadBar(canvas,{
-    x = 10;
+    x = 8;
     y = 100;
     width = 230;
     height = 15;
@@ -92,6 +91,12 @@ local loadBar = betterElements:newLoadBar(canvas,{
     percent = 0;
     visible = true;
     userCanChange = true;
+})
+
+betterElements:setBorder(loadBar,{
+    color = 0xEAEDF6FF;
+    thickness = 4;
+    visible = true;
 })
 
 local iconButton = betterElements:newIconButton(canvas,{
@@ -106,26 +111,46 @@ local iconButton = betterElements:newIconButton(canvas,{
     cursorSet = true;
 })
 
-local rotatedLoadBar = betterElements:newRotatedLoadBar(canvas,{
-    x = 270;
-    y = 10;
-    width = 10;
-    height = 180;
-    radius = 5;
-    color = 0x5395faFF;
-    bgcolor = 0xEAEDF6FF;
-    percent = 0;
-    visible = true;
-    userCanChange = true;
-})
 
-
-frame:addChild(button)
 frame:addChild(checkBox)
 frame:addChild(checkBox2)
 frame:addChild(label)
 frame:addChild(loadBar)
 frame:addChild(iconButton)
+frame.zindex = 1
+
+
+
+local button = betterElements:newButton(canvas,{
+    x = 10;
+    y = 18;
+    width = 110;
+    height = 25;
+    radius = 7;
+    textcolor = 0x5395faFF;
+    fontsize = 14;
+    color = 0xEAEDF6FF;
+    cursorSet = true;
+    text = "Button";
+    visible = true;
+})
+
+local newFrame = betterElements:newFrame(canvas,{
+    x = 10;
+    y = 10;
+    width = 250;
+    height = 180;
+    radius = 10;
+    bgcolor = 0xC9C9C9FF;
+    visible = true;
+    childs = {}
+})
+
+newFrame.zindex = 5
+
+
+
+frame:addChild(button)
 
 local newBorder = betterElements:setBorder(checkBox,{
     color = 0x000000FF;
@@ -138,10 +163,21 @@ betterElements:setBorder(rotatedLoadBar,{
 })
 
 
+button.onClick = function()
+    tween.new(loadBar,50,{percent = math.random(0,100)},function() end,tween.Easings.Linear):Play()
+    tween.new(rotatedLoadBar,50,{percent = math.random(0,100)},function() end,tween.Easings.Linear):Play()
+end
+
+rotatedLoadBar.onChanged = function()
+    betterElements:Destroy(newFrame)
+end
+
+
 function mainWindow:onClose()
     program_config.Running = false
 end
 while program_config.Running do
+    tween:UpdateAll()
     ui.update()
 end
 
