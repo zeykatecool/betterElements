@@ -1,4 +1,4 @@
-local tween = require("modules.tween")
+local tween = require("tween")
 local ui = require("ui")
 require("canvas")
 local program_config = {
