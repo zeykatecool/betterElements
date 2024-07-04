@@ -4,7 +4,7 @@
 
 # Features
 - All Elements listed above:
-+ `Buttons`
++ `Button`
 + `CheckBox`
 + `Label`
 + `IconButton`
@@ -45,6 +45,11 @@ local newBorder = betterElements:setBorder(checkBox,{
 ```
 
 > ⚠️ Warning: IconButton icons need to be `32x32` for better results.
+
+# Latest Updates
+- Added `zindex` property.You can change zindex of all elements.
+- `Borders` are now renders together with the element they are attached to.
+- Added `function checkIfElementUnderOtherElements(element)...`.You can't interact with other elements which is under of the element.
 
 # Installation
 - Just download [betterElements.lua](https://github.com/zeykatecool/betterElements/blob/main/betterElements.lua) and require it from your lua file.
