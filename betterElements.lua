@@ -1,21 +1,17 @@
 local ui = require("ui")
 local BetterElements = {}
 local elements = {}
-local borders = {}
+local zIndexs = {}
 local mainWindow = nil
 
 local module_config = {
-    drawingAll = false;
     extraOnPaintFunc = function(element) end;
-    isHoverChangingMouseCursor = {
-        changer = nil;
-        changing = false;
-    }
 }
+
 
 local function randomName()
     local chars = {}
-    for i=1,5 do
+    for i=1,8 do
         local num = math.random(97,122)
         table.insert(chars, string.char(num))
     end
@@ -50,6 +46,7 @@ function BetterElements:newButton(canvas,tbl)
     button.fontstyle = tbl.fontstyle or "normal"
     button.fontsize = tbl.fontsize or 10
     button.textcolor = tbl.textcolor or 0x000000FF
+    button.zindex = tbl.zindex or 0
     if not button.cursorSet then
         button.cursorSet = true
     end
@@ -61,6 +58,7 @@ function BetterElements:newButton(canvas,tbl)
     button.onHover = tbl.onHover or function() end
     button.onLeave = tbl.onLeave or function() end
     table.insert(elements,button)
+    table.insert(zIndexs,button.zindex)
     return button
 end
 
@@ -84,10 +82,12 @@ function BetterElements:newCheckBox(canvas,tbl)
     checkbox.onClick = tbl.onClick or function() end
     checkbox.onHover = tbl.onHover or function() end
     checkbox.onLeave = tbl.onLeave or function() end
+    checkbox.zindex = tbl.zindex or 0
     checkbox.checkerThickness = tbl.checkerThickness or 2
     checkbox.isMouseHovering = false;
     checkbox.visible = tbl.visible
     table.insert(elements,checkbox)
+    table.insert(zIndexs,checkbox.zindex)
     return checkbox
 end
 
@@ -110,8 +110,10 @@ function BetterElements:newLabel(canvas,tbl)
     label.visible = tbl.visible
     label.onHover = tbl.onHover or function() end
     label.onLeave = tbl.onLeave or function() end
+    label.zindex = tbl.zindex or 0
     label.type = "BetterElement_Label"
     table.insert(elements,label)
+    table.insert(zIndexs,label.zindex)
     return label
 end
 
@@ -145,6 +147,7 @@ function BetterElements:newIconButton(canvas,tbl)
     iconbutton.onClick = tbl.onClick or function() end
     iconbutton.onHover = tbl.onHover or function() end
     iconbutton.onLeave = tbl.onLeave or function() end
+    iconbutton.zindex = tbl.zindex or 0
     if not iconbutton.cursorSet then
         iconbutton.cursorSet = true
     end
@@ -152,6 +155,7 @@ function BetterElements:newIconButton(canvas,tbl)
     iconbutton.isMouseHovering = false;
     iconbutton.visible = tbl.visible
     table.insert(elements,iconbutton)
+    table.insert(zIndexs,iconbutton.zindex)
     return iconbutton
 end
 
@@ -188,9 +192,10 @@ function BetterElements:newFrame(canvas, tbl)
             local value = element
             local positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY = value.x + frame.x, value.y + frame.y
             value.x, value.y = positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY
+            value.parentOfSomething = frame
+            value.zindex = frame.zindex
         end
     end
-
     function frame:removeChild(element)
         if not element.type then
             error("TypeError: bad argument #1 to 'newFrame' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
@@ -199,6 +204,8 @@ function BetterElements:newFrame(canvas, tbl)
                 if v == element then
                     table.remove(frame.childs, i)
                     table.remove(originalPositionOfChild, element)
+                    local value = element
+                    value.parentOfSomething = nil
                 end
             end
         end
@@ -220,6 +227,7 @@ function BetterElements:newFrame(canvas, tbl)
             if not checkIfAlreadyIsAChild(v) then
                 local positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY = v.x + frame.x, v.y + frame.y
                 v.x, v.y = positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY
+                v.parentOfSomething = frame
             end
         end
     end
@@ -227,7 +235,7 @@ function BetterElements:newFrame(canvas, tbl)
     frame.isMouseHovering = false
     frame.type = "BetterElement_Frame"
 
-    local frame_data = { x = tbl.x or 0, y = tbl.y or 0 }
+    local frame_data = { x = tbl.x or 0, y = tbl.y or 0,zindex = tbl.zindex or 0 }
     
     local metatable = {
         __index = function(t, k)
@@ -246,6 +254,12 @@ function BetterElements:newFrame(canvas, tbl)
                     local relativeYOfChild = originalPositionOfChild[ba].y
                     frame.childs[ab].y = v + relativeYOfChild
                 end
+            elseif k == "zindex" then
+                frame_data[k] = v
+                table.insert(zIndexs, v)
+                for ab,ba in pairs(frame.childs) do
+                    frame.childs[ab].zindex = v
+                end
             else
                 rawset(t, k, v)
             end
@@ -253,6 +267,7 @@ function BetterElements:newFrame(canvas, tbl)
     }
     setmetatable(frame, metatable)
     table.insert(elements, frame)
+    table.insert(zIndexs, frame.zindex)
     return frame
 end
 
@@ -271,6 +286,7 @@ function BetterElements:newLoadBar(canvas,tbl)
     loadbar.radius = tbl.radius or 0
     loadbar.bgcolor = tbl.bgcolor or 0x000000FF
     loadbar.color = tbl.color or 0xFFFFFFFF
+    loadbar.zindex = tbl.zindex or 0
     if tbl.visible == nil then
         tbl.visible = true
     end
@@ -285,6 +301,7 @@ function BetterElements:newLoadBar(canvas,tbl)
     loadbar.userChanging = false;
     loadbar.type = "BetterElement_LoadBar"
     table.insert(elements,loadbar)
+    table.insert(zIndexs,loadbar.zindex)
     return loadbar
 end
 
@@ -303,6 +320,7 @@ function BetterElements:newRotatedLoadBar(canvas,tbl)
     loadbar.radius = tbl.radius or 0
     loadbar.bgcolor = tbl.bgcolor or 0x000000FF
     loadbar.color = tbl.color or 0xFFFFFFFF
+    loadbar.zindex = tbl.zindex or 0
     if tbl.visible == nil then
         tbl.visible = true
     end
@@ -317,6 +335,7 @@ function BetterElements:newRotatedLoadBar(canvas,tbl)
     loadbar.userChanging = false;
     loadbar.type = "BetterElement_RotatedLoadBar"
     table.insert(elements,loadbar)
+    table.insert(zIndexs,loadbar.zindex)
     return loadbar
 end
 
@@ -332,6 +351,8 @@ function BetterElements:setBorder(element,tbl)
     border.thickness = tbl.thickness or 1
     border.element = element
     element.border = border
+    border.type = "BetterElement_Border"
+    border.zindex = element.zindex
     if tbl.visible == nil then
         tbl.visible = true
     end
@@ -340,7 +361,25 @@ function BetterElements:setBorder(element,tbl)
     return border
 end
 
+local function checkIfElementUnderOtherElements(element)
+    local zIndexOfElement = element.zindex
+    for i, v in ipairs(elements) do
+        if v ~= element then
+            if v.width and v.height then
+            if v.type ~= "BetterElement_Border" then
+            if v.x < element.x + element.width and v.x + v.width > element.x and v.y < element.y + element.height and v.y + v.height > element.y and v.zindex > zIndexOfElement then
+                return true
+            end
+        end
+            end
+        end
+    end
+    return false
+end
 local function isMouseOnHitBox(x,y,window,obj)
+    if checkIfElementUnderOtherElements(obj) then
+        return false
+    end
     local windowx,windowy,windoww,windowh = window.x,window.y,window.width,window.height
     local mousexaccordingToWindow,mouseyaccordingToWindow = x - windowx,y - windowy
     local mousex,mousey = x,y
@@ -374,130 +413,141 @@ function BetterElements:newCanvas(window,tbl)
     canvas.bgcolor = tbl.bgcolor or 0x000000FF
     canvas.type = "BetterElement_Canvas"
     canvas:show()
-
-    local function updateChildsOfFrame(frame)
-        for i, v in ipairs(frame.childs) do
-            local positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY = v.x + frame.x, v.y + frame.y
-            v.x, v.y = positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY
-        end
-    end
     function canvas:onPaint()
         module_config.extraOnPaintFunc(elements)
         self:clear(canvas.bgcolor)
-        for k,v in ipairs(elements) do
-            if v.type == "BetterElement_Frame" then
-                if v.visible then
-                    drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
-                    if v.border then
-                        if  v.border.visible then
-                        drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
-                    end
-                end
-                end
+        local findSmallestZindex = math.huge
+        for k,v in pairs(elements) do
+            if v.zindex < findSmallestZindex then
+                findSmallestZindex = v.zindex
             end
-            if v.type == "BetterElement_Button" then
-                if v.visible then
-                    drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
-                    local text = v.text
-                    local size = self:measure(text)
-                    canvas.font = v.font
-                    canvas.fontsize = v.fontsize
-                    canvas.fontstyle = v.fontstyle
-                    canvas.fontweight = v.fontweight
-                    local middleOfButtonXforText, middleOfButtonYforText = v.x + v.width/2, v.y + v.height/2
-                    self:print(text, middleOfButtonXforText - size.width/2, middleOfButtonYforText - size.height/2, v.textcolor)
-                    if v.border then
-                        if  v.border.visible then
-                        drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
-                    end
-                end
-                end
+        end
+        local findBiggestZindex = 0
+        for k,v in pairs(elements) do
+            if v.zindex > findBiggestZindex then
+                findBiggestZindex = v.zindex
             end
-            if v.type == "BetterElement_IconButton" then
-                if v.visible then
-                    drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
-                    local Image = canvas:Image(v.icon)
-                    Image.width, Image.height = 32,32
-                    Image.x, Image.y = v.x + v.width/2 - Image.width/2, v.y + v.height/2 - Image.height/2
-                    Image:draw(Image.x,Image.y)
-
-                    if v.border then
-                        if  v.border.visible then
-                        drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+        end
+        for i = findSmallestZindex,findBiggestZindex do
+            for k,v in ipairs(elements) do
+                if v.type then
+                    if v.zindex == i then
+                if v.type == "BetterElement_Frame" then
+                    if v.visible then
+                        drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
+                        if v.border then
+                            if  v.border.visible then
+                            drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+                        end
+                    end
                     end
                 end
-                end
-            end
-            if v.type == "BetterElement_CheckBox" then
-                if v.visible then
-                    if v.border then
-                        if  v.border.visible then
-                        drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
-                    end
-                    end
-                    if v.checked then
-                        local checkerWidth = v.width-v.checkerThickness
-                        local checkerHeight = v.height - v.checkerThickness
-                        local centerOfCheckerX = v.x + v.width/2
-                        local centerOfCheckerY = v.y + v.height/2
+                if v.type == "BetterElement_Button" then
+                    if v.visible then
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
-                        drawRectangle(canvas, centerOfCheckerX - checkerWidth/2, centerOfCheckerY - checkerHeight/2, checkerWidth, checkerHeight, v.radius, v.radius, v.checkedColor)
-                    else
+                        local text = v.text
+                        local size = self:measure(text)
+                        canvas.font = v.font
+                        canvas.fontsize = v.fontsize
+                        canvas.fontstyle = v.fontstyle
+                        canvas.fontweight = v.fontweight
+                        local middleOfButtonXforText, middleOfButtonYforText = v.x + v.width/2, v.y + v.height/2
+                        self:print(text, middleOfButtonXforText - size.width/2, middleOfButtonYforText - size.height/2, v.textcolor)
+                        if v.border then
+                            if  v.border.visible then
+                            drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+                        end
+                    end
+                    end
+                end
+                if v.type == "BetterElement_IconButton" then
+                    if v.visible then
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
+                        local Image = canvas:Image(v.icon)
+                        Image.width, Image.height = 32,32
+                        Image.x, Image.y = v.x + v.width/2 - Image.width/2, v.y + v.height/2 - Image.height/2
+                        Image:draw(Image.x,Image.y)
+            
+                        if v.border then
+                            if  v.border.visible then
+                            drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+                        end
+                    end
                     end
                 end
-            end
-            if v.type == "BetterElement_Label" then
-                if v.visible then
-                    local oldFontSettings = {
-                        font = canvas.font;
-                        fontsize = canvas.fontsize;
-                        fontstyle = canvas.fontstyle;
-                        fontweight = canvas.fontweight
-                    }
-                    local text = v.text
-                    canvas.font = v.font
-                    canvas.fontsize = v.fontsize
-                    canvas.fontstyle = v.fontstyle
-                    canvas.fontweight = v.fontweight
-                    self:print(text, v.x, v.y, v.textcolor)
-
-                    canvas.font = oldFontSettings.font
-                    canvas.fontsize = oldFontSettings.fontsize
-                    canvas.fontstyle = oldFontSettings.fontstyle
-                    canvas.fontweight = oldFontSettings.fontweight
-                end
-            end
-            if v.type == "BetterElement_LoadBar" then
-                if v.visible then
-                    if v.border then
-                        if  v.border.visible then
-                        drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+                if v.type == "BetterElement_CheckBox" then
+                    if v.visible then
+                        if v.border then
+                            if  v.border.visible then
+                            drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+                        end
+                        end
+                        if v.checked then
+                            local checkerWidth = v.width-v.checkerThickness
+                            local checkerHeight = v.height - v.checkerThickness
+                            local centerOfCheckerX = v.x + v.width/2
+                            local centerOfCheckerY = v.y + v.height/2
+                            drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
+                            drawRectangle(canvas, centerOfCheckerX - checkerWidth/2, centerOfCheckerY - checkerHeight/2, checkerWidth, checkerHeight, v.radius, v.radius, v.checkedColor)
+                        else
+                            drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
+                        end
                     end
                 end
+                if v.type == "BetterElement_Label" then
+                    if v.visible then
+                        local oldFontSettings = {
+                            font = canvas.font;
+                            fontsize = canvas.fontsize;
+                            fontstyle = canvas.fontstyle;
+                            fontweight = canvas.fontweight
+                        }
+                        local text = v.text
+                        canvas.font = v.font
+                        canvas.fontsize = v.fontsize
+                        canvas.fontstyle = v.fontstyle
+                        canvas.fontweight = v.fontweight
+                        self:print(text, v.x, v.y, v.textcolor)
+            
+                        canvas.font = oldFontSettings.font
+                        canvas.fontsize = oldFontSettings.fontsize
+                        canvas.fontstyle = oldFontSettings.fontstyle
+                        canvas.fontweight = oldFontSettings.fontweight
+                    end
+                end
+                if v.type == "BetterElement_LoadBar" then
+                    if v.visible then
+                        if v.border then
+                            if  v.border.visible then
+                            drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+                        end
+                    end
+                        drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
+                        local percent = v.percent / 100 
+                        local widthAccordingToPercent = v.width * percent
+                        local height = v.height
+                        drawRectangle(canvas, v.x, v.y, widthAccordingToPercent, height, v.radius, v.radius, v.color)
+                    end
+                end
+                if v.type == "BetterElement_RotatedLoadBar" then
+                    if v.visible then
+                        if v.border then
+                            if  v.border.visible then
+                            drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+                        end
+                    end
                     drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
                     local percent = v.percent / 100 
-                    local widthAccordingToPercent = v.width * percent
-                    local height = v.height
-                    drawRectangle(canvas, v.x, v.y, widthAccordingToPercent, height, v.radius, v.radius, v.color)
-                end
-            end
-            if v.type == "BetterElement_RotatedLoadBar" then
-                if v.visible then
-                    if v.border then
-                        if  v.border.visible then
-                        drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
+                    local heightAccordingToPercent = v.height * percent
+                    local yStart = v.y + (v.height - heightAccordingToPercent)
+                    drawRectangle(canvas, v.x, yStart, v.width, heightAccordingToPercent, v.radius, v.radius, v.color)
                     end
-                end
-                drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
-                local percent = v.percent / 100 
-                local heightAccordingToPercent = v.height * percent
-                local yStart = v.y + (v.height - heightAccordingToPercent)
-                drawRectangle(canvas, v.x, yStart, v.width, heightAccordingToPercent, v.radius, v.radius, v.color)
                 end
             end
         end
     end
+end
+end
     function canvas:onMouseUp()
         for k,v in pairs(elements) do
             if v.type == "BetterElement_LoadBar" then
@@ -575,6 +625,7 @@ function BetterElements:newCanvas(window,tbl)
         for k,v in pairs(elements) do
             if v.type == "BetterElement_Button" then
                 if v.visible then
+                    
                     if  isMouseOnHitBox(mousex, mousey, mainWindow, v) then
                         if v.cursorSet then
                             canvas.cursor = "hand"
