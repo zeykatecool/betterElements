@@ -26,6 +26,27 @@ local function drawBorder(canvas, x, y, width, height, radiusx, radiusy, brush, 
     canvas:roundrect(x , y , x + width , y + height, radiusx, radiusy, brush, thickness)
 end
 
+
+function BetterElements:HEXtoColor(hex)
+    if type(hex) ~= "string" then
+        error("TypeError: bad argument #1 to 'HEXtoColor' (string expected, got "..type(hex)..")")
+    end
+    if hex:find("#") == 1 then
+        hex = hex:sub(2)
+    end
+    local len = #hex
+    if len ~= 6 and len ~= 8 then
+        error("ValueError: bad argument #1 to 'HEXtoColor' (invalid hex color length)")
+    end
+    if len == 6 then
+        hex = hex .. "FF"
+    end
+    local r = tonumber(hex:sub(1, 2), 16)
+    local g = tonumber(hex:sub(3, 4), 16)
+    local b = tonumber(hex:sub(5, 6), 16)
+    local a = tonumber(hex:sub(7, 8), 16)
+    return (r << 24) | (g << 16) | (b << 8) | a
+end
 function BetterElements:newButton(canvas,tbl)
     if type(tbl) ~= "table" then
         error("TypeError: bad argument #1 to 'newButton' (table expected, got "..type(tbl)..")")
@@ -182,7 +203,6 @@ function BetterElements:newFrame(canvas, tbl)
     local frame_data = { x = tbl.x or 0, y = tbl.y or 0, zindex = tbl.zindex or 0 }
 
     local originalPositionOfChild = {}
-    
     function frame:addChild(element)
         if not element.type then
             error("TypeError: bad argument #1 to 'addChild' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
