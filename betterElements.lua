@@ -361,6 +361,29 @@ function BetterElements:setBorder(element,tbl)
     return border
 end
 
+function BetterElements:setShadow(element,tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'setBorder' (table expected, got "..type(tbl)..")")
+    end
+    if not element.type then
+        error("TypeError: bad argument #1 to 'setBorder' (BetterElement_Element expected, got "..type(element)..")")
+    end
+    local shadow = {}
+    shadow.color = tbl.color or 0x000000FF
+    shadow.thickness = tbl.thickness or 1
+    shadow.element = element
+    element.shadow = shadow
+    shadow.offsetX = tbl.offsetX or 0
+    shadow.offsetY = tbl.offsetY or 0
+    shadow.type = "BetterElement_Shadow"
+    if tbl.visible == nil then
+        tbl.visible = true
+    end
+    shadow.visible = tbl.visible
+    table.insert(elements,shadow)
+    return shadow
+end
+
 local function checkIfElementUnderOtherElements(element)
     local zIndexOfElement = element.zindex
     for i, v in ipairs(elements) do
@@ -418,15 +441,20 @@ function BetterElements:newCanvas(window,tbl)
         self:clear(canvas.bgcolor)
         local findSmallestZindex = math.huge
         for k,v in pairs(elements) do
+            if v.zindex then
             if v.zindex < findSmallestZindex then
                 findSmallestZindex = v.zindex
             end
         end
+        end
         local findBiggestZindex = 0
         for k,v in pairs(elements) do
+            if v.zindex then
             if v.zindex > findBiggestZindex then
+                
                 findBiggestZindex = v.zindex
             end
+        end
         end
         for i = findSmallestZindex,findBiggestZindex do
             for k,v in ipairs(elements) do
@@ -434,6 +462,15 @@ function BetterElements:newCanvas(window,tbl)
                     if v.zindex == i then
                 if v.type == "BetterElement_Frame" then
                     if v.visible then
+                        if v.shadow then
+                            if v.shadow.visible then
+                                local shadowX, shadowY = v.x + v.shadow.offsetX, v.y + v.shadow.offsetY
+                                local shadowThickness = v.shadow.thickness
+                                local shadowWidth = v.width + shadowThickness
+                                local shadowHeight = v.height + shadowThickness
+                                drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
+                            end
+                        end
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
                         if v.border then
                             if  v.border.visible then
@@ -444,6 +481,15 @@ function BetterElements:newCanvas(window,tbl)
                 end
                 if v.type == "BetterElement_Button" then
                     if v.visible then
+                        if v.shadow then
+                            if v.shadow.visible then
+                                local shadowX, shadowY = v.x + v.shadow.offsetX, v.y + v.shadow.offsetY
+                                local shadowThickness = v.shadow.thickness
+                                local shadowWidth = v.width + shadowThickness
+                                local shadowHeight = v.height + shadowThickness
+                                drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
+                            end
+                        end
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
                         local text = v.text
                         local size = self:measure(text)
@@ -462,6 +508,15 @@ function BetterElements:newCanvas(window,tbl)
                 end
                 if v.type == "BetterElement_IconButton" then
                     if v.visible then
+                        if v.shadow then
+                            if v.shadow.visible then
+                                local shadowX, shadowY = v.x + v.shadow.offsetX, v.y + v.shadow.offsetY
+                                local shadowThickness = v.shadow.thickness
+                                local shadowWidth = v.width + shadowThickness
+                                local shadowHeight = v.height + shadowThickness
+                                drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
+                            end
+                        end
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
                         local Image = canvas:Image(v.icon)
                         Image.width, Image.height = 32,32
@@ -477,6 +532,15 @@ function BetterElements:newCanvas(window,tbl)
                 end
                 if v.type == "BetterElement_CheckBox" then
                     if v.visible then
+                        if v.shadow then
+                            if v.shadow.visible then
+                                local shadowX, shadowY = v.x + v.shadow.offsetX, v.y + v.shadow.offsetY
+                                local shadowThickness = v.shadow.thickness
+                                local shadowWidth = v.width + shadowThickness
+                                local shadowHeight = v.height + shadowThickness
+                                drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
+                            end
+                        end
                         if v.border then
                             if  v.border.visible then
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
@@ -496,6 +560,15 @@ function BetterElements:newCanvas(window,tbl)
                 end
                 if v.type == "BetterElement_Label" then
                     if v.visible then
+                        if v.shadow then
+                            if v.shadow.visible then
+                                local shadowX, shadowY = v.x + v.shadow.offsetX, v.y + v.shadow.offsetY
+                                local shadowThickness = v.shadow.thickness
+                                local shadowWidth = v.width + shadowThickness
+                                local shadowHeight = v.height + shadowThickness
+                                drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
+                            end
+                        end
                         local oldFontSettings = {
                             font = canvas.font;
                             fontsize = canvas.fontsize;
@@ -517,6 +590,15 @@ function BetterElements:newCanvas(window,tbl)
                 end
                 if v.type == "BetterElement_LoadBar" then
                     if v.visible then
+                        if v.shadow then
+                            if v.shadow.visible then
+                                local shadowX, shadowY = v.x + v.shadow.offsetX, v.y + v.shadow.offsetY
+                                local shadowThickness = v.shadow.thickness
+                                local shadowWidth = v.width + shadowThickness
+                                local shadowHeight = v.height + shadowThickness
+                                drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
+                            end
+                        end
                         if v.border then
                             if  v.border.visible then
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
@@ -531,6 +613,15 @@ function BetterElements:newCanvas(window,tbl)
                 end
                 if v.type == "BetterElement_RotatedLoadBar" then
                     if v.visible then
+                        if v.shadow then
+                            if v.shadow.visible then
+                                local shadowX, shadowY = v.x + v.shadow.offsetX, v.y + v.shadow.offsetY
+                                local shadowThickness = v.shadow.thickness
+                                local shadowWidth = v.width + shadowThickness
+                                local shadowHeight = v.height + shadowThickness
+                                drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
+                            end
+                        end
                         if v.border then
                             if  v.border.visible then
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
@@ -739,7 +830,5 @@ end
     mainWindow = window
     return canvas
 end
-
-
 
 return BetterElements
