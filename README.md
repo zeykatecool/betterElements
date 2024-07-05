@@ -12,10 +12,11 @@
 + `RotatedLoadBar`
 + `Frame`
 + `Border`
++ `Shadow`
 
 > 💡 Tip: CheckBoxes can be used like RadioButtons.
 
-> ⚠️ Warning: `Border` is not actual Element.It attaches to Elements.
+> ⚠️ Warning: `Border` and `Shadow` is not actual Elements.It attaches to Elements.
 
 >Example:
 ```lua
@@ -37,9 +38,18 @@ local frame = betterElements:newFrame(canvas,{
 })
 
 --Adding new border to Frame
-local newBorder = betterElements:setBorder(checkBox,{
+local newBorder = betterElements:setBorder(frame,{
     color = 0x000000FF;
     thickness = 2;
+})
+
+--Adding new shadow to Frame
+local shadowOfFrame = betterElements:setShadow(frame,{
+    color = 0x000000FF;
+    thickness = 1;
+    visible = true;
+    offsetX = 0;
+    offsetY = 1;
 })
 
 ```
@@ -47,6 +57,7 @@ local newBorder = betterElements:setBorder(checkBox,{
 > ⚠️ Warning: IconButton icons need to be `32x32` for better results.
 
 # Latest Updates
+- Added `Shadow` Element.You can add shadow to all elements now.
 - Added `zindex` property.You can change zindex of all elements.
 - `Borders` are now renders together with the element they are attached to.
 - Added `function checkIfElementUnderOtherElements(element)...`.You can't interact with other elements which is under of the element.
