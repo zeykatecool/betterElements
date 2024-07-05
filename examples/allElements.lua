@@ -1,4 +1,3 @@
-local tween = require("tween")
 local ui = require("ui")
 require("canvas")
 local program_config = {
@@ -135,6 +134,9 @@ local button = betterElements:newButton(canvas,{
     visible = true;
 })
 
+
+
+
 local newFrame = betterElements:newFrame(canvas,{
     x = 10;
     y = 10;
@@ -156,28 +158,27 @@ local newBorder = betterElements:setBorder(checkBox,{
     color = 0x000000FF;
     thickness = 1;
 })
-
-betterElements:setBorder(rotatedLoadBar,{
-    color = 0xFFFFFFFF;
-    thickness = 3;
+local shadowOfButton = betterElements:setShadow(button,{
+    color = 0x000000FF;
+    thickness = 1;
+    visible = true;
+    offsetX = 0;
+    offsetY = 1;
 })
 
 
-button.onClick = function()
-    tween.new(loadBar,50,{percent = math.random(0,100)},function() end,tween.Easings.Linear):Play()
-    tween.new(rotatedLoadBar,50,{percent = math.random(0,100)},function() end,tween.Easings.Linear):Play()
-end
+
 
 rotatedLoadBar.onChanged = function()
     betterElements:Destroy(newFrame)
 end
 
 
+
 function mainWindow:onClose()
     program_config.Running = false
 end
 while program_config.Running do
-    tween:UpdateAll()
     ui.update()
 end
 
