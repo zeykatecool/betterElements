@@ -203,7 +203,12 @@ function BetterElements:newFrame(canvas, tbl)
             for i, v in ipairs(frame.childs) do
                 if v == element then
                     table.remove(frame.childs, i)
-                    table.remove(originalPositionOfChild, element)
+                    --table.remove(originalPositionOfChild, element)
+                    for ab,ba in pairs(frame.childs) do
+                        if ba == element then
+                            table.remove(frame.childs, ab)
+                        end
+                    end
                     local value = element
                     value.parentOfSomething = nil
                 end
