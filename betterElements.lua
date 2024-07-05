@@ -173,44 +173,40 @@ function BetterElements:newFrame(canvas, tbl)
     frame.height = tbl.height or 0
     frame.radius = tbl.radius or 0
     frame.bgcolor = tbl.bgcolor or 0x000000FF
-    if tbl.visible == nil then
-        tbl.visible = true
-    end
-    frame.visible = tbl.visible
+    frame.visible = tbl.visible == nil and true or tbl.visible
     frame.onHover = tbl.onHover or function() end
     frame.onLeave = tbl.onLeave or function() end
     frame.onClick = tbl.onClick or function() end
-    frame.childs = tbl.childs or {}
+    frame.childs = {}
+
+    local frame_data = { x = tbl.x or 0, y = tbl.y or 0, zindex = tbl.zindex or 0 }
 
     local originalPositionOfChild = {}
+    
     function frame:addChild(element)
         if not element.type then
-            error("TypeError: bad argument #1 to 'newFrame' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
+            error("TypeError: bad argument #1 to 'addChild' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
         else
-            table.insert(frame.childs,element)
-            originalPositionOfChild[element] = {x = element.x, y = element.y}
-            local value = element
-            local positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY = value.x + frame.x, value.y + frame.y
-            value.x, value.y = positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY
-            value.parentOfSomething = frame
-            value.zindex = frame.zindex
+            table.insert(frame.childs, element)
+            originalPositionOfChild[element] = { x = element.x, y = element.y }
+            element.x, element.y = element.x + frame.x, element.y + frame.y
+            element.parentOfSomething = frame
+            element.zindex = frame.zindex
         end
     end
+
     function frame:removeChild(element)
         if not element.type then
-            error("TypeError: bad argument #1 to 'newFrame' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
+            error("TypeError: bad argument #1 to 'removeChild' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
         else
             for i, v in ipairs(frame.childs) do
                 if v == element then
                     table.remove(frame.childs, i)
-                    --table.remove(originalPositionOfChild, element)
-                    for ab,ba in pairs(frame.childs) do
-                        if ba == element then
-                            table.remove(frame.childs, ab)
-                        end
-                    end
-                    local value = element
-                    value.parentOfSomething = nil
+                    element.x = originalPositionOfChild[element].x
+                    element.y = originalPositionOfChild[element].y
+                    originalPositionOfChild[element] = nil
+                    element.parentOfSomething = nil
+                    break
                 end
             end
         end
@@ -225,14 +221,12 @@ function BetterElements:newFrame(canvas, tbl)
         return false
     end
 
-    for i, v in ipairs(frame.childs) do
+    for i, v in ipairs(tbl.childs or {}) do
         if not v.type then
             error("TypeError: bad argument #1 to 'newFrame' (BetterElement_ELEMENT expected for child, got " .. type(v) .. ")")
         else
             if not checkIfAlreadyIsAChild(v) then
-                local positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY = v.x + frame.x, v.y + frame.y
-                v.x, v.y = positionaccordingtoFrameAndWindowX, positionaccordingtoFrameAndWindowY
-                v.parentOfSomething = frame
+                frame:addChild(v)
             end
         end
     end
@@ -240,30 +234,28 @@ function BetterElements:newFrame(canvas, tbl)
     frame.isMouseHovering = false
     frame.type = "BetterElement_Frame"
 
-    local frame_data = { x = tbl.x or 0, y = tbl.y or 0,zindex = tbl.zindex or 0 }
-    
     local metatable = {
         __index = function(t, k)
             return frame_data[k]
         end,
         __newindex = function(t, k, v)
-            if k == "x"  then
+            if k == "x" then
+                local dx = v - frame_data[k]
                 frame_data[k] = v
-                for ab,ba in pairs(frame.childs) do
-                    local relativeXOfChild = originalPositionOfChild[ba].x
-                    frame.childs[ab].x = v + relativeXOfChild
+                for _, child in ipairs(frame.childs) do
+                    child.x = child.x + dx
                 end
             elseif k == "y" then
+                local dy = v - frame_data[k]
                 frame_data[k] = v
-                for ab,ba in pairs(frame.childs) do
-                    local relativeYOfChild = originalPositionOfChild[ba].y
-                    frame.childs[ab].y = v + relativeYOfChild
+                for _, child in ipairs(frame.childs) do
+                    child.y = child.y + dy
                 end
             elseif k == "zindex" then
                 frame_data[k] = v
                 table.insert(zIndexs, v)
-                for ab,ba in pairs(frame.childs) do
-                    frame.childs[ab].zindex = v
+                for _, child in ipairs(frame.childs) do
+                    child.zindex = v
                 end
             else
                 rawset(t, k, v)
@@ -275,7 +267,6 @@ function BetterElements:newFrame(canvas, tbl)
     table.insert(zIndexs, frame.zindex)
     return frame
 end
-
 function BetterElements:newLoadBar(canvas,tbl)
     if type(tbl) ~= "table" then
         error("TypeError: bad argument #1 to 'newLoadBar' (table expected, got "..type(tbl)..")")
