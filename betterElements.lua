@@ -372,6 +372,9 @@ function BetterElements:setShadow(element,tbl)
     shadow.color = tbl.color or 0x000000FF
     shadow.thickness = tbl.thickness or 1
     shadow.element = element
+    if shadow.element.type == "BetterElement_Border" then
+        error("TypeError: bad argument #1 to 'setBorder' (BetterElement_Border can't have shadow)")
+    end
     element.shadow = shadow
     shadow.offsetX = tbl.offsetX or 0
     shadow.offsetY = tbl.offsetY or 0
