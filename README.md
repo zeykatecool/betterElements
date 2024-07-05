@@ -56,6 +56,24 @@ local shadowOfFrame = betterElements:setShadow(frame,{
 
 > ⚠️ Warning: IconButton icons need to be `32x32` for better results.
 
+## Information about Element Colors
+* Element colors is represented by a number, an RGBA value (one byte per primary color and one byte for alpha channel).
+* A RGBA color can be represented as an hexadecimal number : 0xRRGGBBAA , RR meaning a 8bit hexadecimal red value, and so on.
+* Alpha channel specifies the opacity level of a color and can range from 00 to FF.
+
+> Example : Get HEX Code of red color and write it like that `0xff0000`.After that put Alpha Channel.For example `0xff0000FF`.
+* If you still didn't understand how to do it you can use `BetterElements:HEXtoColor(HEX)` function.
+> Example :
+```lua
+local BetterElements = require("betterElements")
+print(BetterElements:HEXtoColor("#C9C9C9"),0xC9C9C9FF)
+--[[ Output : 
+3385444863
+3385444863
+]]
+-- Result is same so they are same colors.
+```
+
 # Latest Updates
 - Added `Shadow` Element.You can add shadow to all elements now.
 - Added `zindex` property.You can change zindex of all elements.
