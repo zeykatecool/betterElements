@@ -51,7 +51,7 @@ local shadowOfFrame = betterElements:setShadow(frame,{
     offsetX = 0;
     offsetY = 1;
 })
-
+--Check examples folder for better example.
 ```
 
 > ⚠️ Warning: IconButton icons need to be `32x32` for better results.
@@ -79,6 +79,7 @@ local frame = betterElements:newFrame(canvas,{
     childs = {}
 })
 --Frame CANNOT be seen.
+--Check examples folder for better example.
 ```
 
 # Latest Updates
