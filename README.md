@@ -81,6 +81,7 @@ local frame = betterElements:newFrame(canvas,{
 --Frame CANNOT be seen.
 --Check examples folder for better example.
 ```
+> ⚠️ Warning: Elements with a `transparency` value of `0` can still interact with the user.You can set `visible` value to `false` if you don't want this.
 
 # Latest Updates
 - Added `transparency` property.You can change transparency of all elements.
