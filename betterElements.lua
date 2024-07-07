@@ -27,9 +27,9 @@ local function drawBorder(canvas, x, y, width, height, radiusx, radiusy, brush, 
 end
 
 
-function BetterElements:HEXtoColor(hex)
+function BetterElements:HEXtoColor(hex, alpha)
     if type(hex) ~= "string" then
-        error("TypeError: bad argument #1 to 'HEXtoColor' (string expected, got "..type(hex)..")")
+        error("TypeError: bad argument #1 to 'HEXtoColor' (string expected, got " .. type(hex) .. ")")
     end
     if hex:find("#") == 1 then
         hex = hex:sub(2)
@@ -44,8 +44,29 @@ function BetterElements:HEXtoColor(hex)
     local r = tonumber(hex:sub(1, 2), 16)
     local g = tonumber(hex:sub(3, 4), 16)
     local b = tonumber(hex:sub(5, 6), 16)
-    local a = tonumber(hex:sub(7, 8), 16)
-    return (r << 24) | (g << 16) | (b << 8) | a
+    local a = tonumber(hex:sub(7, 8), 16) or 255
+    if alpha then
+        a = (1 - alpha) * 255
+    end
+    return (r << 24) | (g << 16) | (b << 8) | math.floor(a)
+end
+
+local function transparencyForColor(hex, transparencyValue)
+    if type(hex) ~= "number" then
+        error("TypeError: bad argument #1 to 'transparencyForColor' (number expected, got " .. type(hex) .. ")")
+    end
+
+    -- Renk ve opaklık değerlerini ayırma
+    local color = hex >> 8
+    local alpha = hex & 0xFF
+
+    -- Yeni opaklık değerini hesaplama
+    local newAlpha = math.floor((1 - transparencyValue) * 255)
+
+    -- Yeni renk ve opaklık değerlerini birleştirme
+    local newHex = (color << 8) | newAlpha
+
+    return newHex
 end
 function BetterElements:newButton(canvas,tbl)
     if type(tbl) ~= "table" then
@@ -68,6 +89,7 @@ function BetterElements:newButton(canvas,tbl)
     button.fontsize = tbl.fontsize or 10
     button.textcolor = tbl.textcolor or 0x000000FF
     button.zindex = tbl.zindex or 0
+    button.transparency = tbl.transparency or 0
     if not button.cursorSet then
         button.cursorSet = true
     end
@@ -104,6 +126,7 @@ function BetterElements:newCheckBox(canvas,tbl)
     checkbox.onHover = tbl.onHover or function() end
     checkbox.onLeave = tbl.onLeave or function() end
     checkbox.zindex = tbl.zindex or 0
+    checkbox.transparency = tbl.transparency or 0
     checkbox.checkerThickness = tbl.checkerThickness or 2
     checkbox.isMouseHovering = false;
     checkbox.visible = tbl.visible
@@ -129,6 +152,7 @@ function BetterElements:newLabel(canvas,tbl)
     label.fontsize = tbl.fontsize or 10
     label.textcolor = tbl.textcolor or 0x000000FF
     label.visible = tbl.visible
+    label.transparency = tbl.transparency or 0
     label.onHover = tbl.onHover or function() end
     label.onLeave = tbl.onLeave or function() end
     label.zindex = tbl.zindex or 0
@@ -168,6 +192,7 @@ function BetterElements:newIconButton(canvas,tbl)
     iconbutton.onClick = tbl.onClick or function() end
     iconbutton.onHover = tbl.onHover or function() end
     iconbutton.onLeave = tbl.onLeave or function() end
+    iconbutton.transparency = tbl.transparency or 0
     iconbutton.zindex = tbl.zindex or 0
     if not iconbutton.cursorSet then
         iconbutton.cursorSet = true
@@ -195,6 +220,7 @@ function BetterElements:newFrame(canvas, tbl)
     frame.radius = tbl.radius or 0
     frame.bgcolor = tbl.bgcolor or 0x000000FF
     frame.visible = tbl.visible == nil and true or tbl.visible
+    frame.transparency = tbl.transparency or 0
     frame.onHover = tbl.onHover or function() end
     frame.onLeave = tbl.onLeave or function() end
     frame.onClick = tbl.onClick or function() end
@@ -312,7 +338,7 @@ function BetterElements:newLoadBar(canvas,tbl)
     loadbar.onLeave = tbl.onLeave or function() end
     loadbar.onClick = tbl.onClick or function() end
     loadbar.onChanged = tbl.onChanged or function() end
-
+    loadbar.transparency = tbl.transparency or 0
     loadbar.userCanChange = tbl.userCanChange or false;
     loadbar.userChanging = false;
     loadbar.type = "BetterElement_LoadBar"
@@ -336,6 +362,7 @@ function BetterElements:newRotatedLoadBar(canvas,tbl)
     loadbar.radius = tbl.radius or 0
     loadbar.bgcolor = tbl.bgcolor or 0x000000FF
     loadbar.color = tbl.color or 0xFFFFFFFF
+    loadbar.transparency = tbl.transparency or 0
     loadbar.zindex = tbl.zindex or 0
     if tbl.visible == nil then
         tbl.visible = true
@@ -368,6 +395,7 @@ function BetterElements:setBorder(element,tbl)
     border.element = element
     element.border = border
     border.type = "BetterElement_Border"
+    border.transparency = tbl.transparency or 0
     border.zindex = element.zindex
     if tbl.visible == nil then
         tbl.visible = true
@@ -386,6 +414,7 @@ function BetterElements:setShadow(element,tbl)
     end
     local shadow = {}
     shadow.color = tbl.color or 0x000000FF
+    shadow.transparency = tbl.transparency or 0
     shadow.thickness = tbl.thickness or 1
     shadow.element = element
     if shadow.element.type == "BetterElement_Border" then
@@ -487,12 +516,15 @@ function BetterElements:newCanvas(window,tbl)
                                 local shadowThickness = v.shadow.thickness
                                 local shadowWidth = v.width + shadowThickness
                                 local shadowHeight = v.height + shadowThickness
+                                v.shadow.color = transparencyForColor(v.shadow.color,v.shadow.transparency)
                                 drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
                             end
                         end
+                        v.bgcolor = transparencyForColor(v.bgcolor,v.transparency)
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
                         if v.border then
                             if  v.border.visible then
+                                v.border.color = transparencyForColor(v.border.color,v.border.transparency)
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
                         end
                     end
@@ -506,9 +538,11 @@ function BetterElements:newCanvas(window,tbl)
                                 local shadowThickness = v.shadow.thickness
                                 local shadowWidth = v.width + shadowThickness
                                 local shadowHeight = v.height + shadowThickness
+                                v.shadow.color = transparencyForColor(v.shadow.color,v.shadow.transparency)
                                 drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
                             end
                         end
+                        v.color = transparencyForColor(v.color,v.transparency)
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
                         local text = v.text
                         local size = self:measure(text)
@@ -517,9 +551,11 @@ function BetterElements:newCanvas(window,tbl)
                         canvas.fontstyle = v.fontstyle
                         canvas.fontweight = v.fontweight
                         local middleOfButtonXforText, middleOfButtonYforText = v.x + v.width/2, v.y + v.height/2
+                        v.textcolor = transparencyForColor(v.textcolor,v.transparency)
                         self:print(text, middleOfButtonXforText - size.width/2, middleOfButtonYforText - size.height/2, v.textcolor)
                         if v.border then
                             if  v.border.visible then
+                            v.border.color = transparencyForColor(v.border.color,v.border.transparency)
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
                         end
                     end
@@ -533,9 +569,11 @@ function BetterElements:newCanvas(window,tbl)
                                 local shadowThickness = v.shadow.thickness
                                 local shadowWidth = v.width + shadowThickness
                                 local shadowHeight = v.height + shadowThickness
+                                v.shadow.color = transparencyForColor(v.shadow.color,v.shadow.transparency)
                                 drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
                             end
                         end
+                        v.color = transparencyForColor(v.color,v.transparency)
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
                         local Image = canvas:Image(v.icon)
                         Image.width, Image.height = 32,32
@@ -544,6 +582,7 @@ function BetterElements:newCanvas(window,tbl)
             
                         if v.border then
                             if  v.border.visible then
+                            v.border.color = transparencyForColor(v.border.color,v.border.transparency)
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
                         end
                     end
@@ -557,11 +596,13 @@ function BetterElements:newCanvas(window,tbl)
                                 local shadowThickness = v.shadow.thickness
                                 local shadowWidth = v.width + shadowThickness
                                 local shadowHeight = v.height + shadowThickness
+                                v.shadow.color = transparencyForColor(v.shadow.color,v.shadow.transparency)
                                 drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
                             end
                         end
                         if v.border then
                             if  v.border.visible then
+                            v.border.color = transparencyForColor(v.border.color,v.border.transparency)
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
                         end
                         end
@@ -570,9 +611,12 @@ function BetterElements:newCanvas(window,tbl)
                             local checkerHeight = v.height - v.checkerThickness
                             local centerOfCheckerX = v.x + v.width/2
                             local centerOfCheckerY = v.y + v.height/2
+                            v.color = transparencyForColor(v.color,v.transparency)
+                            v.checkedColor = transparencyForColor(v.checkedColor,v.transparency)
                             drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
                             drawRectangle(canvas, centerOfCheckerX - checkerWidth/2, centerOfCheckerY - checkerHeight/2, checkerWidth, checkerHeight, v.radius, v.radius, v.checkedColor)
                         else
+                            v.color = transparencyForColor(v.color,v.transparency)
                             drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
                         end
                     end
@@ -585,6 +629,7 @@ function BetterElements:newCanvas(window,tbl)
                                 local shadowThickness = v.shadow.thickness
                                 local shadowWidth = v.width + shadowThickness
                                 local shadowHeight = v.height + shadowThickness
+                                v.shadow.color = transparencyForColor(v.shadow.color,v.shadow.transparency)
                                 drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
                             end
                         end
@@ -599,6 +644,7 @@ function BetterElements:newCanvas(window,tbl)
                         canvas.fontsize = v.fontsize
                         canvas.fontstyle = v.fontstyle
                         canvas.fontweight = v.fontweight
+                        v.textcolor = transparencyForColor(v.textcolor,v.transparency)
                         self:print(text, v.x, v.y, v.textcolor)
             
                         canvas.font = oldFontSettings.font
@@ -615,16 +661,20 @@ function BetterElements:newCanvas(window,tbl)
                                 local shadowThickness = v.shadow.thickness
                                 local shadowWidth = v.width + shadowThickness
                                 local shadowHeight = v.height + shadowThickness
+                                v.shadow.color = transparencyForColor(v.shadow.color,v.shadow.transparency)
                                 drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
                             end
                         end
                         if v.border then
                             if  v.border.visible then
+                            v.border.color = transparencyForColor(v.border.color,v.border.transparency)
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
                         end
                     end
+                        v.bgcolor = transparencyForColor(v.bgcolor,v.transparency)
+                        v.color = transparencyForColor(v.color,v.transparency)
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
-                        local percent = v.percent / 100 
+                        local percent = v.percent / 100
                         local widthAccordingToPercent = v.width * percent
                         local height = v.height
                         drawRectangle(canvas, v.x, v.y, widthAccordingToPercent, height, v.radius, v.radius, v.color)
@@ -638,14 +688,18 @@ function BetterElements:newCanvas(window,tbl)
                                 local shadowThickness = v.shadow.thickness
                                 local shadowWidth = v.width + shadowThickness
                                 local shadowHeight = v.height + shadowThickness
+                                v.shadow.color = transparencyForColor(v.shadow.color,v.shadow.transparency)
                                 drawRectangle(canvas, shadowX, shadowY, shadowWidth, shadowHeight, v.radius, v.radius, v.shadow.color)
                             end
                         end
                         if v.border then
                             if  v.border.visible then
+                            v.border.color = transparencyForColor(v.border.color,v.border.transparency)
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
                         end
                     end
+                        v.bgcolor = transparencyForColor(v.bgcolor,v.transparency)
+                        v.color = transparencyForColor(v.color,v.transparency)
                     drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.bgcolor)
                     local percent = v.percent / 100 
                     local heightAccordingToPercent = v.height * percent
