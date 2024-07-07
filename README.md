@@ -57,28 +57,35 @@ local shadowOfFrame = betterElements:setShadow(frame,{
 > ⚠️ Warning: IconButton icons need to be `32x32` for better results.
 
 ## Information about Element Colors
-* Element colors is represented by a number, an RGBA value (one byte per primary color and one byte for alpha channel).
-* A RGBA color can be represented as an hexadecimal number : 0xRRGGBBAA , RR meaning a 8bit hexadecimal red value, and so on.
-* Alpha channel specifies the opacity level of a color and can range from 00 to FF.
-
-> Example : Get HEX Code of red color and write it like that `0xff0000`.After that put Alpha Channel.For example `0xff0000FF`.
-* If you still didn't understand how to do it you can use `BetterElements:HEXtoColor(HEX)` function.
-> Example :
+* ~~Element colors is represented by a number, an RGBA value (one byte per primary color and one byte for alpha channel).~~
+* You can use `transparency` property for this now.
+> Example:
 ```lua
-local BetterElements = require("betterElements")
-print(BetterElements:HEXtoColor("#C9C9C9"),0xC9C9C9FF)
---[[ Output : 
-3385444863
-3385444863
-]]
--- Result is same so they are same colors.
+local betterElements = require("betterElements")
+
+local canvas = betterElements:newCanvas(mainWindow,{
+    bgcolor = 0x242424FF;
+})
+
+local frame = betterElements:newFrame(canvas,{
+    x = 10;
+    y = 10;
+    width = 250;
+    height = 180;
+    radius = 10;
+    bgcolor = 0xC9C9C9FF; --Alpha channel is FF (means it is opaque) but it will be not seen because transparency is 1.
+    visible = true;
+    transparency = 1;
+    childs = {}
+})
+--Frame CANNOT be seen.
 ```
 
 # Latest Updates
+- Added `transparency` property.You can change transparency of all elements.
 - Added `Shadow` Element.You can add shadow to all elements now.
 - Added `zindex` property.You can change zindex of all elements.
 - `Borders` are now renders together with the element they are attached to.
-- Added `function checkIfElementUnderOtherElements(element)...`.You can't interact with other elements which is under of the element.
 
 # Installation
 - Just download [betterElements.lua](https://github.com/zeykatecool/betterElements/blob/main/betterElements.lua) and require it from your lua file.
