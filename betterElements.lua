@@ -55,17 +55,10 @@ local function transparencyForColor(hex, transparencyValue)
     if type(hex) ~= "number" then
         error("TypeError: bad argument #1 to 'transparencyForColor' (number expected, got " .. type(hex) .. ")")
     end
-
-    -- Renk ve opaklık değerlerini ayırma
     local color = hex >> 8
     local alpha = hex & 0xFF
-
-    -- Yeni opaklık değerini hesaplama
     local newAlpha = math.floor((1 - transparencyValue) * 255)
-
-    -- Yeni renk ve opaklık değerlerini birleştirme
     local newHex = (color << 8) | newAlpha
-
     return newHex
 end
 function BetterElements:newButton(canvas,tbl)
