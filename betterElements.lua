@@ -56,10 +56,17 @@ local function transparencyForColor(hex, transparencyValue)
     if type(hex) ~= "number" then
         error("TypeError: bad argument #1 to 'transparencyForColor' (number expected, got " .. type(hex) .. ")")
     end
+
+    -- Renk ve opaklık değerlerini ayırma
     local color = hex >> 8
     local alpha = hex & 0xFF
+
+    -- Yeni opaklık değerini hesaplama
     local newAlpha = math.floor((1 - transparencyValue) * 255)
+
+    -- Yeni renk ve opaklık değerlerini birleştirme
     local newHex = (color << 8) | newAlpha
+
     return newHex
 end
 function BetterElements:newButton(canvas,tbl)
@@ -94,6 +101,7 @@ function BetterElements:newButton(canvas,tbl)
     button.onClick = tbl.onClick or function() end
     button.onHover = tbl.onHover or function() end
     button.onLeave = tbl.onLeave or function() end
+    button.onMouseUp = tbl.onMouseUp or function() end
     table.insert(elements,button)
     table.insert(zIndexs,button.zindex)
     return button
@@ -119,6 +127,7 @@ function BetterElements:newCheckBox(canvas,tbl)
     checkbox.onClick = tbl.onClick or function() end
     checkbox.onHover = tbl.onHover or function() end
     checkbox.onLeave = tbl.onLeave or function() end
+    checkbox.onMouseUp = tbl.onMouseUp or function() end
     checkbox.zindex = tbl.zindex or 0
     checkbox.transparency = tbl.transparency or 0
     checkbox.checkerThickness = tbl.checkerThickness or 2
@@ -186,6 +195,7 @@ function BetterElements:newIconButton(canvas,tbl)
     iconbutton.onClick = tbl.onClick or function() end
     iconbutton.onHover = tbl.onHover or function() end
     iconbutton.onLeave = tbl.onLeave or function() end
+    iconbutton.onMouseUp = tbl.onMouseUp or function() end
     iconbutton.transparency = tbl.transparency or 0
     iconbutton.zindex = tbl.zindex or 0
     if not iconbutton.cursorSet then
@@ -218,6 +228,7 @@ function BetterElements:newFrame(canvas, tbl)
     frame.onHover = tbl.onHover or function() end
     frame.onLeave = tbl.onLeave or function() end
     frame.onClick = tbl.onClick or function() end
+    frame.onMouseUp = tbl.onMouseUp or function() end
     frame.childs = {}
 
     local frame_data = { x = tbl.x or 0, y = tbl.y or 0, zindex = tbl.zindex or 0 }
@@ -332,6 +343,7 @@ function BetterElements:newLoadBar(canvas,tbl)
     loadbar.onLeave = tbl.onLeave or function() end
     loadbar.onClick = tbl.onClick or function() end
     loadbar.onChanged = tbl.onChanged or function() end
+    loadbar.onMouseUp = tbl.onMouseUp or function() end
     loadbar.transparency = tbl.transparency or 0
     loadbar.userCanChange = tbl.userCanChange or false;
     loadbar.userChanging = false;
@@ -367,6 +379,7 @@ function BetterElements:newRotatedLoadBar(canvas,tbl)
     loadbar.onLeave = tbl.onLeave or function() end
     loadbar.onClick = tbl.onClick or function() end
     loadbar.onChanged = tbl.onChanged or function() end
+    loadbar.onMouseUp = tbl.onMouseUp or function() end
 
     loadbar.userCanChange = tbl.userCanChange or false;
     loadbar.userChanging = false;
@@ -478,6 +491,7 @@ function BetterElements:newCanvas(window,tbl)
     canvas.bgcolor = tbl.bgcolor or 0x000000FF
     canvas.type = "BetterElement_Canvas"
     canvas:show()
+
     function canvas:onPaint()
         module_config.extraOnPaintFunc(elements)
         self:clear(canvas.bgcolor)
@@ -717,6 +731,10 @@ end
                 if v.visible then
                     v.userChanging = false
                 end
+            end
+            local mousex, mousey = ui.mousepos()
+            if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                v.onMouseUp()
             end
         end
     end
