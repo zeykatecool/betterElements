@@ -1,4 +1,5 @@
 local ui = require("ui")
+require("canvas")
 local BetterElements = {}
 local elements = {}
 local zIndexs = {}
