@@ -57,14 +57,14 @@ local function transparencyForColor(hex, transparencyValue)
         error("TypeError: bad argument #1 to 'transparencyForColor' (number expected, got " .. type(hex) .. ")")
     end
 
-    -- Renk ve opaklık değerlerini ayırma
+    -- Separate color and opacity values
     local color = hex >> 8
     local alpha = hex & 0xFF
 
-    -- Yeni opaklık değerini hesaplama
+    -- Calculate new opacity value
     local newAlpha = math.floor((1 - transparencyValue) * 255)
 
-    -- Yeni renk ve opaklık değerlerini birleştirme
+    -- Combine new color and opacity values
     local newHex = (color << 8) | newAlpha
 
     return newHex
@@ -444,7 +444,7 @@ local function checkIfElementUnderOtherElements(element)
     for i, v in ipairs(elements) do
         if v ~= element then
             if v.width and v.height then
-            if v.type ~= "BetterElement_Border" then
+            if v.type ~= "BetterElement_Border" and v.type ~= "BetterElement_Shadow" and v.type ~= "BetterElement_Label" then
             if v.x < element.x + element.width and v.x + v.width > element.x and v.y < element.y + element.height and v.y + v.height > element.y and v.zindex > zIndexOfElement then
                 return true
             end
@@ -734,8 +734,10 @@ end
             end
             local mousex, mousey = ui.mousepos()
             if v.visible then
+                if v.type ~= "BetterElement_Border" and v.type ~= "BetterElement_Shadow" then
             if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
                 v.onMouseUp()
+            end
             end
         end
         end
