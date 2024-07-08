@@ -733,9 +733,11 @@ end
                 end
             end
             local mousex, mousey = ui.mousepos()
+            if v.visible then
             if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
                 v.onMouseUp()
             end
+        end
         end
     end
     function canvas:onClick()
