@@ -722,6 +722,7 @@ end
 end
     function canvas:onMouseUp()
         for k,v in pairs(elements) do
+            if v.type ~= "BetterElement_Label" then
             if v.type == "BetterElement_LoadBar" then
                 if v.visible then
                     v.userChanging = false
@@ -739,6 +740,7 @@ end
                 v.onMouseUp()
             end
             end
+        end
         end
         end
     end
