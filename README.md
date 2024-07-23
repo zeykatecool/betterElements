@@ -11,6 +11,7 @@
 + `LoadBar`
 + `RotatedLoadBar`
 + `Frame`
++ `Image`
 + `Border`
 + `Shadow`
 
@@ -84,10 +85,11 @@ local frame = betterElements:newFrame(canvas,{
 > ⚠️ Warning: Elements with a `transparency` value of `0` can still interact with the user.You can set `visible` value to `false` if you don't want this.
 
 # Latest Updates
+- Added `Image` element.
 - Added `transparency` property.You can change transparency of all elements.
 - Added `Shadow` Element.You can add shadow to all elements now.
 - Added `zindex` property.You can change zindex of all elements.
-- `Borders` are now renders together with the element they are attached to.
+
 
 # Installation
 - Just download [betterElements.lua](https://github.com/zeykatecool/betterElements/blob/main/betterElements.lua) and require it from your lua file.
