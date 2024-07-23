@@ -1,5 +1,4 @@
 local ui = require("ui")
-require("canvas")
 local BetterElements = {}
 local elements = {}
 local zIndexs = {}
@@ -57,14 +56,14 @@ local function transparencyForColor(hex, transparencyValue)
         error("TypeError: bad argument #1 to 'transparencyForColor' (number expected, got " .. type(hex) .. ")")
     end
 
-    -- Separate color and opacity values
+    -- Renk ve opaklık değerlerini ayırma
     local color = hex >> 8
     local alpha = hex & 0xFF
 
-    -- Calculate new opacity value
+    -- Yeni opaklık değerini hesaplama
     local newAlpha = math.floor((1 - transparencyValue) * 255)
 
-    -- Combine new color and opacity values
+    -- Yeni renk ve opaklık değerlerini birleştirme
     local newHex = (color << 8) | newAlpha
 
     return newHex
@@ -101,7 +100,6 @@ function BetterElements:newButton(canvas,tbl)
     button.onClick = tbl.onClick or function() end
     button.onHover = tbl.onHover or function() end
     button.onLeave = tbl.onLeave or function() end
-    button.onMouseUp = tbl.onMouseUp or function() end
     table.insert(elements,button)
     table.insert(zIndexs,button.zindex)
     return button
@@ -127,7 +125,6 @@ function BetterElements:newCheckBox(canvas,tbl)
     checkbox.onClick = tbl.onClick or function() end
     checkbox.onHover = tbl.onHover or function() end
     checkbox.onLeave = tbl.onLeave or function() end
-    checkbox.onMouseUp = tbl.onMouseUp or function() end
     checkbox.zindex = tbl.zindex or 0
     checkbox.transparency = tbl.transparency or 0
     checkbox.checkerThickness = tbl.checkerThickness or 2
@@ -195,7 +192,6 @@ function BetterElements:newIconButton(canvas,tbl)
     iconbutton.onClick = tbl.onClick or function() end
     iconbutton.onHover = tbl.onHover or function() end
     iconbutton.onLeave = tbl.onLeave or function() end
-    iconbutton.onMouseUp = tbl.onMouseUp or function() end
     iconbutton.transparency = tbl.transparency or 0
     iconbutton.zindex = tbl.zindex or 0
     if not iconbutton.cursorSet then
@@ -228,7 +224,6 @@ function BetterElements:newFrame(canvas, tbl)
     frame.onHover = tbl.onHover or function() end
     frame.onLeave = tbl.onLeave or function() end
     frame.onClick = tbl.onClick or function() end
-    frame.onMouseUp = tbl.onMouseUp or function() end
     frame.childs = {}
 
     local frame_data = { x = tbl.x or 0, y = tbl.y or 0, zindex = tbl.zindex or 0 }
@@ -343,7 +338,6 @@ function BetterElements:newLoadBar(canvas,tbl)
     loadbar.onLeave = tbl.onLeave or function() end
     loadbar.onClick = tbl.onClick or function() end
     loadbar.onChanged = tbl.onChanged or function() end
-    loadbar.onMouseUp = tbl.onMouseUp or function() end
     loadbar.transparency = tbl.transparency or 0
     loadbar.userCanChange = tbl.userCanChange or false;
     loadbar.userChanging = false;
@@ -379,7 +373,6 @@ function BetterElements:newRotatedLoadBar(canvas,tbl)
     loadbar.onLeave = tbl.onLeave or function() end
     loadbar.onClick = tbl.onClick or function() end
     loadbar.onChanged = tbl.onChanged or function() end
-    loadbar.onMouseUp = tbl.onMouseUp or function() end
 
     loadbar.userCanChange = tbl.userCanChange or false;
     loadbar.userChanging = false;
@@ -387,6 +380,45 @@ function BetterElements:newRotatedLoadBar(canvas,tbl)
     table.insert(elements,loadbar)
     table.insert(zIndexs,loadbar.zindex)
     return loadbar
+end
+
+function  BetterElements:newImage(canvas,tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'newImage' (table expected, got "..type(tbl)..")")
+    end
+    if canvas.type ~= "BetterElement_Canvas" then
+        error("TypeError: bad argument #1 to 'newImage' (BetterElement_Canvas expected, got "..type(canvas)..")")
+    end
+    local image = {}
+    image.name = tbl.name or randomName()
+    image.x,image.y = tbl.x or 0,tbl.y or 0
+    image.image = tbl.image
+    if not image.image then
+        error("TypeError: bad argument #1 to 'newImage' (image_string expected, got "..type(tbl.image)..")")
+    end
+    local function originalWandH(pic)
+        local getPic = ui.Picture(mainWindow,pic)
+        getPic.enabled = false
+        getPic.visible = false
+            local w,h = getPic.width,getPic.height
+            getPic = nil
+            return {w,h}
+    end
+    image.width,image.height = tbl.width or originalWandH(tbl.image)[1],tbl.height or originalWandH(tbl.image)[2]
+    image.zindex = tbl.zindex or 0
+    if tbl.visible == nil then
+        tbl.visible = true
+    end
+   -- require("console").writeln(image.width,image.height)
+    image.visible = tbl.visible
+    image.transparency = tbl.transparency or 0
+    image.onHover = tbl.onHover or function() end
+    image.onLeave = tbl.onLeave or function() end
+    image.onClick = tbl.onClick or function() end
+    image.type = "BetterElement_Image"
+    table.insert(elements,image)
+    table.insert(zIndexs,image.zindex)
+    return image
 end
 
 function BetterElements:setBorder(element,tbl)
@@ -444,7 +476,7 @@ local function checkIfElementUnderOtherElements(element)
     for i, v in ipairs(elements) do
         if v ~= element then
             if v.width and v.height then
-            if v.type ~= "BetterElement_Border" and v.type ~= "BetterElement_Shadow" and v.type ~= "BetterElement_Label" then
+            if v.type ~= "BetterElement_Border" then
             if v.x < element.x + element.width and v.x + v.width > element.x and v.y < element.y + element.height and v.y + v.height > element.y and v.zindex > zIndexOfElement then
                 return true
             end
@@ -536,6 +568,15 @@ function BetterElements:newCanvas(window,tbl)
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
                         end
                     end
+                    end
+                end
+                if v.type == "BetterElement_Image" then
+                    if v.visible then
+                        local Image = canvas:Image(v.image)
+                        Image.width, Image.height = v.width, v.height
+                        local newx, newy = v.x + v.width / 2 - Image.width / 2, v.y + v.height / 2 - Image.height / 2
+                        Image.x, Image.y = newx, newy
+                        Image:drawrect(newx,newy,v.width,v.height,1)
                     end
                 end
                 if v.type == "BetterElement_Button" then
@@ -722,7 +763,6 @@ end
 end
     function canvas:onMouseUp()
         for k,v in pairs(elements) do
-            if v.type ~= "BetterElement_Label" then
             if v.type == "BetterElement_LoadBar" then
                 if v.visible then
                     v.userChanging = false
@@ -733,19 +773,16 @@ end
                     v.userChanging = false
                 end
             end
-            local mousex, mousey = ui.mousepos()
-            if v.visible then
-                if v.type ~= "BetterElement_Border" and v.type ~= "BetterElement_Shadow" then
-            if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
-                v.onMouseUp()
-            end
-            end
-        end
-        end
         end
     end
     function canvas:onClick()
         for k,v in pairs(elements) do
+            if v.type == "BetterElement_Image" then
+                local mousex,mousey = ui.mousepos()
+                if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
+                    v.onClick()
+                end
+            end
             if v.type == "BetterElement_Frame" then
                 if v.visible then
                     local mousex, mousey = ui.mousepos()
@@ -805,6 +842,22 @@ end
         local cursorSet = false
         local mousex, mousey = ui.mousepos()
         for k,v in pairs(elements) do
+            if v.type == "BetterElement_Image" then
+                if v.visible then
+                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                        v.isMouseHovering = true;
+                        if v.cursorSet then
+                            canvas.cursor = "hand"
+                        end
+                        v.onHover()
+                    else
+                        if v.isMouseHovering then
+                        v.onLeave()
+                        v.isMouseHovering = false;
+                        end
+                    end
+                end
+            end
             if v.type == "BetterElement_Button" then
                 if v.visible then
                     
