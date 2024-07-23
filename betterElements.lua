@@ -576,7 +576,10 @@ function BetterElements:newCanvas(window,tbl)
                         Image.width, Image.height = v.width, v.height
                         local newx, newy = v.x + v.width / 2 - Image.width / 2, v.y + v.height / 2 - Image.height / 2
                         Image.x, Image.y = newx, newy
-                        Image:drawrect(newx,newy,v.width,v.height,1)
+                     local   function invertTransparency(transparency)
+                            return 1 - transparency
+                        end
+                        Image:drawrect(newx,newy,v.width,v.height,invertTransparency(v.transparency))
                     end
                 end
                 if v.type == "BetterElement_Button" then
