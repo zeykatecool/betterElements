@@ -85,10 +85,16 @@ local frame = betterElements:newFrame(canvas,{
 > ⚠️ Warning: Elements with a `transparency` value of `0` can still interact with the user.You can set `visible` value to `false` if you don't want this.
 
 # Latest Updates
+- Added `betterElements:isMouseOnElement(window,object)` function.
+> Usage Example:
+```lua
+function betterElements_Canvas:onContext()
+  if betterElement.isMouseOnElement(mainWindow,underPlusButton) then
+    require("console").writeln("Hello")
+  end
+end
+```
 - Added `Image` element.
-- Added `transparency` property.You can change transparency of all elements.
-- Added `Shadow` Element.You can add shadow to all elements now.
-- Added `zindex` property.You can change zindex of all elements.
 
 
 # Installation
