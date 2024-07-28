@@ -162,6 +162,8 @@ function BetterElements:newLabel(canvas,tbl)
     return label
 end
 
+BetterElements.elements = elements
+
 local function checkIfPictureExists(icon)
 local sys = require("sys")
     local file = sys.File(icon)
@@ -224,6 +226,7 @@ function BetterElements:newFrame(canvas, tbl)
     frame.onHover = tbl.onHover or function() end
     frame.onLeave = tbl.onLeave or function() end
     frame.onClick = tbl.onClick or function() end
+    frame.isHaveListLayout = false
     frame.childs = {}
 
     local frame_data = { x = tbl.x or 0, y = tbl.y or 0, zindex = tbl.zindex or 0 }
@@ -233,6 +236,12 @@ function BetterElements:newFrame(canvas, tbl)
         if not element.type then
             error("TypeError: bad argument #1 to 'addChild' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
         else
+            if element.type then
+                if element.type == "BetterElement_ListLayout" then
+                    frame.isHaveListLayout = true
+                    return
+                end
+            end
             table.insert(frame.childs, element)
             originalPositionOfChild[element] = { x = element.x, y = element.y }
             element.x, element.y = element.x + frame.x, element.y + frame.y
@@ -247,6 +256,12 @@ function BetterElements:newFrame(canvas, tbl)
         else
             for i, v in ipairs(frame.childs) do
                 if v == element then
+                    if element.type then
+                        if element.type == "BetterElement_ListLayout" then
+                            frame.isHaveListLayout = false
+                            return
+                        end
+                    end
                     table.remove(frame.childs, i)
                     element.x = originalPositionOfChild[element].x
                     element.y = originalPositionOfChild[element].y
@@ -313,6 +328,126 @@ function BetterElements:newFrame(canvas, tbl)
     table.insert(zIndexs, frame.zindex)
     return frame
 end
+
+function BetterElements:newListLayout(frame, tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'newListLayout' (table expected, got "..type(tbl)..")")
+    end
+    if frame.type ~= "BetterElement_Frame" then
+        error("TypeError: bad argument #1 to 'newListLayout' (BetterElement_Frame expected, got "..type(frame)..")")
+    end
+
+    local listLayout = {}
+    listLayout.type = "BetterElement_ListLayout"
+    listLayout.direction = tbl.direction or "vertical" -- vertical or horizontal
+    listLayout.align = tbl.align or "start" -- start, center, end
+    listLayout.justify = tbl.justify or "start" -- start, center, end
+    listLayout.spacing = tbl.spacing or 0
+    listLayout.frame = frame
+    if not mainWindow then
+        mainWindow = {}
+    end
+    local function updateChildsPosition()
+        if listLayout.direction == "vertical" then
+            local y = frame.y
+            for _, child in ipairs(frame.childs) do
+                child.x = frame.x
+                child.y = y
+                y = y + child.height + listLayout.spacing
+            end
+        elseif listLayout.direction == "horizontal" then
+            local x = frame.x
+            for _, child in ipairs(frame.childs) do
+                child.x = x
+                child.y = frame.y
+                x = x + child.width + listLayout.spacing
+            end
+        end
+    end
+
+    local function updateChildsAlign()
+        if listLayout.align == "center" then
+            if listLayout.direction == "vertical" then
+                local totalHeight = (#frame.childs * (frame.childs[1].height + listLayout.spacing)) - listLayout.spacing
+                local offset = (mainWindow.height - totalHeight) / 2 - frame.y
+                for _, child in ipairs(frame.childs) do
+                    child.y = child.y + offset
+                end
+            elseif listLayout.direction == "horizontal" then
+                local totalWidth = (#frame.childs * (frame.childs[1].width + listLayout.spacing)) - listLayout.spacing
+                local offset = (mainWindow.width - totalWidth) / 2 - frame.x
+                for _, child in ipairs(frame.childs) do
+                    child.x = child.x + offset
+                end
+            end
+        elseif listLayout.align == "end" then
+            if listLayout.direction == "vertical" then
+                local totalHeight = (#frame.childs * (frame.childs[1].height + listLayout.spacing)) - listLayout.spacing
+                local offset = mainWindow.height - totalHeight - frame.y
+                for _, child in ipairs(frame.childs) do
+                    child.y = child.y + offset
+                end
+            elseif listLayout.direction == "horizontal" then
+                local totalWidth = (#frame.childs * (frame.childs[1].width + listLayout.spacing)) - listLayout.spacing
+                local offset = mainWindow.width - totalWidth - frame.x
+                for _, child in ipairs(frame.childs) do
+                    child.x = child.x + offset
+                end
+            end
+        end
+    end
+
+    local function updateChildsJustify()
+        if listLayout.justify == "center" then
+            if listLayout.direction == "vertical" then
+                for _, child in ipairs(frame.childs) do
+                    child.x = frame.x + (frame.width - child.width) / 2
+                end
+            elseif listLayout.direction == "horizontal" then
+                for _, child in ipairs(frame.childs) do
+                    child.y = frame.y + (frame.height - child.height) / 2
+                end
+            end
+        elseif listLayout.justify == "end" then
+            if listLayout.direction == "vertical" then
+                for _, child in ipairs(frame.childs) do
+                    child.x = frame.x + frame.width - child.width
+                end
+            elseif listLayout.direction == "horizontal" then
+                for _, child in ipairs(frame.childs) do
+                    child.y = frame.y + frame.height - child.height
+                end
+            end
+        end
+    end
+
+    function listLayout:updateChilds()
+        updateChildsPosition()
+        updateChildsAlign()
+        updateChildsJustify()
+    end
+
+    frame.listLayout = listLayout
+
+    local original_addChild = frame.addChild
+    function frame:addChild(element)
+        original_addChild(self, element)
+        listLayout:updateChilds()
+    end
+
+    local original_removeChild = frame.removeChild
+    function frame:removeChild(element)
+        original_removeChild(self, element)
+        listLayout:updateChilds()
+    end
+
+    table.insert(elements, listLayout)
+    return listLayout
+end
+
+
+
+
 function BetterElements:newLoadBar(canvas,tbl)
     if type(tbl) ~= "table" then
         error("TypeError: bad argument #1 to 'newLoadBar' (table expected, got "..type(tbl)..")")
@@ -502,6 +637,8 @@ local function isMouseOnHitBox(x,y,window,obj)
     return false
 end
 
+BetterElements.isMouseOnElement = isMouseOnHitBox
+
 function BetterElements:addToPaint(func)
     module_config.extraOnPaintFunc = func
 end
@@ -596,20 +733,31 @@ function BetterElements:newCanvas(window,tbl)
                         end
                         v.color = transparencyForColor(v.color,v.transparency)
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
+                        local oldFontSettings = {
+                            font = canvas.font;
+                            fontsize = canvas.fontsize;
+                            fontstyle = canvas.fontstyle;
+                            fontweight = canvas.fontweight
+                        }
+                        canvas.font = v.font;
+                        canvas.fontsize = v.fontsize;
+                        canvas.fontstyle = v.fontstyle;
+                        canvas.fontweight = v.fontweight;
                         local text = v.text
                         local size = self:measure(text)
-                        canvas.font = v.font
-                        canvas.fontsize = v.fontsize
-                        canvas.fontstyle = v.fontstyle
-                        canvas.fontweight = v.fontweight
                         local middleOfButtonXforText, middleOfButtonYforText = v.x + v.width/2, v.y + v.height/2
                         v.textcolor = transparencyForColor(v.textcolor,v.transparency)
                         self:print(text, middleOfButtonXforText - size.width/2, middleOfButtonYforText - size.height/2, v.textcolor)
+                        canvas.font = oldFontSettings.font;
+                        canvas.fontsize = oldFontSettings.fontsize;
+                        canvas.fontstyle = oldFontSettings.fontstyle;
+                        canvas.fontweight = oldFontSettings.fontweight;
                         if v.border then
                             if  v.border.visible then
                             v.border.color = transparencyForColor(v.border.color,v.border.transparency)
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
                         end
+        
                     end
                     end
                 end
@@ -847,6 +995,25 @@ end
         for k,v in pairs(elements) do
             if v.type == "BetterElement_Image" then
                 if v.visible then
+                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                        v.isMouseHovering = true;
+                        if v.cursorSet then
+                            canvas.cursor = "hand"
+                        end
+                        v.onHover()
+                    else
+                        if v.isMouseHovering then
+                        v.onLeave()
+                        v.isMouseHovering = false;
+                        end
+                    end
+                end
+            end
+            if v.type == "BetterElement_Label" then
+                if v.visible then
+                    local measure = self:measure(v.text)
+                    local w,h = measure.width,measure.height
+                    v.width,v.height = w,h
                     if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
                         v.isMouseHovering = true;
                         if v.cursorSet then
