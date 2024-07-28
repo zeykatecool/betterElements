@@ -637,7 +637,10 @@ local function isMouseOnHitBox(x,y,window,obj)
     return false
 end
 
-BetterElements.isMouseOnElement = isMouseOnHitBox
+function BetterElements:isMouseOnElement(window,obj)
+    local x,y = ui.mousepos()
+    return isMouseOnHitBox(x,y,window,obj)
+end
 
 function BetterElements:addToPaint(func)
     module_config.extraOnPaintFunc = func
