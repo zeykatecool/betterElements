@@ -21,6 +21,7 @@ function Easings.InOutQuad(t)
         return -1 + (4 - 2 * t) * t
     end
 end
+
 function Easings.OutBounce(t)
     if t < 1 / 2.75 then
         return 7.5625 * t * t
@@ -41,10 +42,6 @@ local Tween = {
 }
 
 function Tween.new(Object, HowLong, Properties, Callback, Easing)
-    if Tweens[Object] then
-        return Tweens[Object]
-    end
-
     local newTween = setmetatable({
         Object = Object,
         HowLong = HowLong,
@@ -57,41 +54,57 @@ function Tween.new(Object, HowLong, Properties, Callback, Easing)
         __index = Tween
     })
 
-    Tweens[Object] = newTween
     return newTween
 end
 
 function Tween:Play()
     self.ElapsedTime = 0
     self.Playing = true
+    Tweens[self] = self
 end
 
-local function updateTweens(deltaTime)
+function Tween:Stop()
+    self.ElapsedTime = 0
+    self.Playing = false
+    Tweens[self] = nil
+end
+
+function Tween:clearAll()
     for _, tween in pairs(Tweens) do
         if tween.Playing then
-            tween.ElapsedTime = tween.ElapsedTime + deltaTime
+            tween.Playing = false
+            if tween.Callback then
+                tween.Callback(tween.Object)
+            end
+        end
+    end
+    Tweens = {}
+end
+
+local function updateTweens()
+    for _, tween in pairs(Tweens) do
+        if tween.Playing then
+            tween.ElapsedTime = tween.ElapsedTime + 1
             local progress = math.min(tween.ElapsedTime / tween.HowLong, 1)
             local easedProgress = tween.Easing(progress)
-
             for property, endValue in pairs(tween.Properties) do
                 local startValue = tween.Object[property]
                 local newValue = startValue + (endValue - startValue) * easedProgress
                 tween.Object[property] = newValue
-            end
-
-            if progress >= 1 then
-                tween.Playing = false
-                if tween.Callback then
-                    tween.Callback(tween.Object)
+                if progress >= 1 then
+                    tween.Playing = false
+                    if tween.Callback then
+                        tween.Callback(tween.Object)
+                    end
+                    Tweens[tween] = nil
                 end
-                Tweens[tween.Object] = nil
             end
         end
     end
 end
 
-function Tween.UpdateAll(deltaTime)
-    updateTweens(deltaTime)
+function Tween.UpdateAll()
+    updateTweens()
 end
 
 return Tween
