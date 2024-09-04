@@ -1,6 +1,5 @@
 local ui = require("ui")
 require("canvas")
-local tween = require("tween")
 local betterElements = require("betterElements")
 local program_config = {
     Running = true;
@@ -97,6 +96,5 @@ end
 
 while program_config.Running do
     ui.update()
-    tween:UpdateAll()
     updateMovingElements()
 end
