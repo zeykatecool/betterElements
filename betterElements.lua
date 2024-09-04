@@ -684,9 +684,10 @@ function BetterElements:newCanvas(window,tbl)
     canvas.bgcolor = tbl.bgcolor or 0x000000FF
     canvas.type = "BetterElement_Canvas"
     canvas:show()
-
-  
+    
+  canvas.onSignal = tbl.onSignal or function(signal) end
     function canvas:onClick()
+        canvas.onSignal("click")
         for k,v in pairs(elements) do
             if v.type == "BetterElement_Image" then
                 local mousex,mousey = ui.mousepos()
@@ -750,6 +751,7 @@ function BetterElements:newCanvas(window,tbl)
         end
     end
     function canvas:onPaint()
+        canvas.onSignal("paint")
         module_config.extraOnPaintFunc(elements)
         self:clear(canvas.bgcolor)
         local findSmallestZindex = math.huge
@@ -994,6 +996,7 @@ end
 
 
 function canvas:onMouseUp()
+    canvas.onSignal("mouseup")
         for k,v in pairs(elements) do
             if v.type ~= "BetterElement_Label" then
             if v.type == "BetterElement_LoadBar" then
@@ -1019,6 +1022,7 @@ function canvas:onMouseUp()
     end
    
     function canvas:onHover()
+        canvas.onSignal("hover")
         local cursorSet = false
         local mousex, mousey = ui.mousepos()
         for k,v in pairs(elements) do
