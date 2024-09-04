@@ -1,4 +1,5 @@
 local ui = require("ui")
+require("canvas")
 local BetterElements = {}
 local elements = {}
 local zIndexs = {}
@@ -7,8 +8,6 @@ local mainWindow = nil
 local module_config = {
     extraOnPaintFunc = function(element) end;
 }
-
-
 local function randomName()
     local chars = {}
     for i=1,8 do
@@ -56,14 +55,14 @@ local function transparencyForColor(hex, transparencyValue)
         error("TypeError: bad argument #1 to 'transparencyForColor' (number expected, got " .. type(hex) .. ")")
     end
 
-    -- Renk ve opaklık değerlerini ayırma
+    -- Separate color and opacity values
     local color = hex >> 8
     local alpha = hex & 0xFF
 
-    -- Yeni opaklık değerini hesaplama
+    -- Calculate new opacity value
     local newAlpha = math.floor((1 - transparencyValue) * 255)
 
-    -- Yeni renk ve opaklık değerlerini birleştirme
+    -- Combine new color and opacity values
     local newHex = (color << 8) | newAlpha
 
     return newHex
@@ -100,6 +99,7 @@ function BetterElements:newButton(canvas,tbl)
     button.onClick = tbl.onClick or function() end
     button.onHover = tbl.onHover or function() end
     button.onLeave = tbl.onLeave or function() end
+    button.onMouseUp = tbl.onMouseUp or function() end
     table.insert(elements,button)
     table.insert(zIndexs,button.zindex)
     return button
@@ -125,6 +125,7 @@ function BetterElements:newCheckBox(canvas,tbl)
     checkbox.onClick = tbl.onClick or function() end
     checkbox.onHover = tbl.onHover or function() end
     checkbox.onLeave = tbl.onLeave or function() end
+    checkbox.onMouseUp = tbl.onMouseUp or function() end
     checkbox.zindex = tbl.zindex or 0
     checkbox.transparency = tbl.transparency or 0
     checkbox.checkerThickness = tbl.checkerThickness or 2
@@ -135,199 +136,6 @@ function BetterElements:newCheckBox(canvas,tbl)
     return checkbox
 end
 
-function BetterElements:newLabel(canvas,tbl)
-    if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'newLabel' (table expected, got "..type(tbl)..")")
-    end
-    if canvas.type ~= "BetterElement_Canvas" then
-        error("TypeError: bad argument #1 to 'newLabel' (BetterElement_Canvas expected, got "..type(canvas)..")")
-    end
-    local label = {}
-    label.name = tbl.name or randomName()
-    label.x,label.y = tbl.x or 0,tbl.y or 0
-    label.text = tbl.text or "Label"
-    label.font = tbl.font or "Consolas"
-    label.fontweight = tbl.fontweight or 200
-    label.fontstyle = tbl.fontstyle or "normal"
-    label.fontsize = tbl.fontsize or 10
-    label.textcolor = tbl.textcolor or 0x000000FF
-    label.visible = tbl.visible
-    label.transparency = tbl.transparency or 0
-    label.onHover = tbl.onHover or function() end
-    label.onLeave = tbl.onLeave or function() end
-    label.zindex = tbl.zindex or 0
-    label.type = "BetterElement_Label"
-    table.insert(elements,label)
-    table.insert(zIndexs,label.zindex)
-    return label
-end
-
-BetterElements.elements = elements
-
-local function checkIfPictureExists(icon)
-local sys = require("sys")
-    local file = sys.File(icon)
-    if file.exists then
-        return true
-    else
-        error("TypeError: bad argument #1 to 'newButton' (File not found: "..icon..")")
-    end
-end
-
-function BetterElements:newIconButton(canvas,tbl)
-    if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'newIconButton' (table expected, got "..type(tbl)..")")
-    end
-    if canvas.type ~= "BetterElement_Canvas" then
-        error("TypeError: bad argument #1 to 'newIconButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
-    end
-    local iconbutton = {}
-    iconbutton.name = tbl.name or randomName()
-    iconbutton.x,iconbutton.y = tbl.x or 0,tbl.y or 0
-    iconbutton.width = tbl.width or 20
-    iconbutton.height = tbl.height or 20
-    iconbutton.radius = tbl.radius or 0
-    iconbutton.color = tbl.color or 0x000000FF
-    checkIfPictureExists(tbl.icon)
-    iconbutton.icon = tbl.icon
-    iconbutton.type = "BetterElement_IconButton"
-    iconbutton.onClick = tbl.onClick or function() end
-    iconbutton.onHover = tbl.onHover or function() end
-    iconbutton.onLeave = tbl.onLeave or function() end
-    iconbutton.transparency = tbl.transparency or 0
-    iconbutton.zindex = tbl.zindex or 0
-    if not iconbutton.cursorSet then
-        iconbutton.cursorSet = true
-    end
-    iconbutton.cursorSet = tbl.cursorSet
-    iconbutton.isMouseHovering = false;
-    iconbutton.visible = tbl.visible
-    table.insert(elements,iconbutton)
-    table.insert(zIndexs,iconbutton.zindex)
-    return iconbutton
-end
-
-function BetterElements:newFrame(canvas, tbl)
-    if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'newFrame' (table expected, got "..type(tbl)..")")
-    end
-    if canvas.type ~= "BetterElement_Canvas" then
-        error("TypeError: bad argument #1 to 'newFrame' (BetterElement_Canvas expected, got "..type(canvas)..")")
-    end
-
-    local frame = {}
-    frame.name = tbl.name or randomName()
-    frame.width = tbl.width or 0
-    frame.height = tbl.height or 0
-    frame.radius = tbl.radius or 0
-    frame.bgcolor = tbl.bgcolor or 0x000000FF
-    frame.visible = tbl.visible == nil and true or tbl.visible
-    frame.transparency = tbl.transparency or 0
-    frame.onHover = tbl.onHover or function() end
-    frame.onLeave = tbl.onLeave or function() end
-    frame.onClick = tbl.onClick or function() end
-    frame.isHaveListLayout = false
-    frame.childs = {}
-
-    local frame_data = { x = tbl.x or 0, y = tbl.y or 0, zindex = tbl.zindex or 0 }
-
-    local originalPositionOfChild = {}
-    function frame:addChild(element)
-        if not element.type then
-            error("TypeError: bad argument #1 to 'addChild' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
-        else
-            if element.type then
-                if element.type == "BetterElement_ListLayout" then
-                    frame.isHaveListLayout = true
-                    return
-                end
-            end
-            table.insert(frame.childs, element)
-            originalPositionOfChild[element] = { x = element.x, y = element.y }
-            element.x, element.y = element.x + frame.x, element.y + frame.y
-            element.parentOfSomething = frame
-            element.zindex = frame.zindex
-        end
-    end
-
-    function frame:removeChild(element)
-        if not element.type then
-            error("TypeError: bad argument #1 to 'removeChild' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
-        else
-            for i, v in ipairs(frame.childs) do
-                if v == element then
-                    if element.type then
-                        if element.type == "BetterElement_ListLayout" then
-                            frame.isHaveListLayout = false
-                            return
-                        end
-                    end
-                    table.remove(frame.childs, i)
-                    element.x = originalPositionOfChild[element].x
-                    element.y = originalPositionOfChild[element].y
-                    originalPositionOfChild[element] = nil
-                    element.parentOfSomething = nil
-                    break
-                end
-            end
-        end
-    end
-
-    local function checkIfAlreadyIsAChild(element)
-        for i, v in ipairs(frame.childs) do
-            if v == element then
-                return true
-            end
-        end
-        return false
-    end
-
-    for i, v in ipairs(tbl.childs or {}) do
-        if not v.type then
-            error("TypeError: bad argument #1 to 'newFrame' (BetterElement_ELEMENT expected for child, got " .. type(v) .. ")")
-        else
-            if not checkIfAlreadyIsAChild(v) then
-                frame:addChild(v)
-            end
-        end
-    end
-
-    frame.isMouseHovering = false
-    frame.type = "BetterElement_Frame"
-
-    local metatable = {
-        __index = function(t, k)
-            return frame_data[k]
-        end,
-        __newindex = function(t, k, v)
-            if k == "x" then
-                local dx = v - frame_data[k]
-                frame_data[k] = v
-                for _, child in ipairs(frame.childs) do
-                    child.x = child.x + dx
-                end
-            elseif k == "y" then
-                local dy = v - frame_data[k]
-                frame_data[k] = v
-                for _, child in ipairs(frame.childs) do
-                    child.y = child.y + dy
-                end
-            elseif k == "zindex" then
-                frame_data[k] = v
-                table.insert(zIndexs, v)
-                for _, child in ipairs(frame.childs) do
-                    child.zindex = v
-                end
-            else
-                rawset(t, k, v)
-            end
-        end
-    }
-    setmetatable(frame, metatable)
-    table.insert(elements, frame)
-    table.insert(zIndexs, frame.zindex)
-    return frame
-end
 
 function BetterElements:newListLayout(frame, tbl)
     if type(tbl) ~= "table" then
@@ -446,8 +254,186 @@ function BetterElements:newListLayout(frame, tbl)
 end
 
 
+function BetterElements:newLabel(canvas,tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'newLabel' (table expected, got "..type(tbl)..")")
+    end
+    if canvas.type ~= "BetterElement_Canvas" then
+        error("TypeError: bad argument #1 to 'newLabel' (BetterElement_Canvas expected, got "..type(canvas)..")")
+    end
+    local label = {}
+    label.name = tbl.name or randomName()
+    label.x,label.y = tbl.x or 0,tbl.y or 0
+    label.text = tbl.text or "Label"
+    label.font = tbl.font or "Consolas"
+    label.fontweight = tbl.fontweight or 200
+    label.fontstyle = tbl.fontstyle or "normal"
+    label.fontsize = tbl.fontsize or 10
+    label.textcolor = tbl.textcolor or 0x000000FF
+    label.visible = tbl.visible
+    label.transparency = tbl.transparency or 0
+    label.onHover = tbl.onHover or function() end
+    label.onLeave = tbl.onLeave or function() end
+    label.zindex = tbl.zindex or 0
+    label.type = "BetterElement_Label"
+    table.insert(elements,label)
+    table.insert(zIndexs,label.zindex)
+    return label
+end
 
+local function checkIfPictureExists(icon)
+local sys = require("sys")
+    local file = sys.File(icon)
+    if file.exists then
+        return true
+    else
+        error("TypeError: bad argument #1 to 'newButton' (File not found: "..icon..")")
+    end
+end
 
+function BetterElements:newIconButton(canvas,tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'newIconButton' (table expected, got "..type(tbl)..")")
+    end
+    if canvas.type ~= "BetterElement_Canvas" then
+        error("TypeError: bad argument #1 to 'newIconButton' (BetterElement_Canvas expected, got "..type(canvas)..")")
+    end
+    local iconbutton = {}
+    iconbutton.name = tbl.name or randomName()
+    iconbutton.x,iconbutton.y = tbl.x or 0,tbl.y or 0
+    iconbutton.width = tbl.width or 20
+    iconbutton.height = tbl.height or 20
+    iconbutton.radius = tbl.radius or 0
+    iconbutton.color = tbl.color or 0x000000FF
+    checkIfPictureExists(tbl.icon)
+    iconbutton.icon = tbl.icon
+    iconbutton.type = "BetterElement_IconButton"
+    iconbutton.onClick = tbl.onClick or function() end
+    iconbutton.onHover = tbl.onHover or function() end
+    iconbutton.onLeave = tbl.onLeave or function() end
+    iconbutton.onMouseUp = tbl.onMouseUp or function() end
+    iconbutton.transparency = tbl.transparency or 0
+    iconbutton.zindex = tbl.zindex or 0
+    if not iconbutton.cursorSet then
+        iconbutton.cursorSet = true
+    end
+    iconbutton.cursorSet = tbl.cursorSet
+    iconbutton.isMouseHovering = false;
+    iconbutton.visible = tbl.visible
+    table.insert(elements,iconbutton)
+    table.insert(zIndexs,iconbutton.zindex)
+    return iconbutton
+end
+
+function BetterElements:newFrame(canvas, tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'newFrame' (table expected, got "..type(tbl)..")")
+    end
+    if canvas.type ~= "BetterElement_Canvas" then
+        error("TypeError: bad argument #1 to 'newFrame' (BetterElement_Canvas expected, got "..type(canvas)..")")
+    end
+
+    local frame = {}
+    frame.name = tbl.name or randomName()
+    frame.width = tbl.width or 0
+    frame.height = tbl.height or 0
+    frame.radius = tbl.radius or 0
+    frame.bgcolor = tbl.bgcolor or 0x000000FF
+    frame.visible = tbl.visible == nil and true or tbl.visible
+    frame.transparency = tbl.transparency or 0
+    frame.onHover = tbl.onHover or function() end
+    frame.onLeave = tbl.onLeave or function() end
+    frame.onClick = tbl.onClick or function() end
+    frame.onMouseUp = tbl.onMouseUp or function() end
+    frame.childs = {}
+
+    local frame_data = { x = tbl.x or 0, y = tbl.y or 0, zindex = tbl.zindex or 0 }
+
+    local originalPositionOfChild = {}
+    function frame:addChild(element)
+        if not element.type then
+            error("TypeError: bad argument #1 to 'addChild' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
+        else
+            table.insert(frame.childs, element)
+            originalPositionOfChild[element] = { x = element.x, y = element.y }
+            element.x, element.y = element.x + frame.x, element.y + frame.y
+            element.parentOfSomething = frame
+            element.zindex = frame.zindex
+        end
+    end
+
+    function frame:removeChild(element)
+        if not element.type then
+            error("TypeError: bad argument #1 to 'removeChild' (BetterElement_ELEMENT expected for child, got " .. type(element) .. ")")
+        else
+            for i, v in ipairs(frame.childs) do
+                if v == element then
+                    table.remove(frame.childs, i)
+                    element.x = originalPositionOfChild[element].x
+                    element.y = originalPositionOfChild[element].y
+                    originalPositionOfChild[element] = nil
+                    element.parentOfSomething = nil
+                    break
+                end
+            end
+        end
+    end
+
+    local function checkIfAlreadyIsAChild(element)
+        for i, v in ipairs(frame.childs) do
+            if v == element then
+                return true
+            end
+        end
+        return false
+    end
+
+    for i, v in ipairs(tbl.childs or {}) do
+        if not v.type then
+            error("TypeError: bad argument #1 to 'newFrame' (BetterElement_ELEMENT expected for child, got " .. type(v) .. ")")
+        else
+            if not checkIfAlreadyIsAChild(v) then
+                frame:addChild(v)
+            end
+        end
+    end
+
+    frame.isMouseHovering = false
+    frame.type = "BetterElement_Frame"
+
+    local metatable = {
+        __index = function(t, k)
+            return frame_data[k]
+        end,
+        __newindex = function(t, k, v)
+            if k == "x" then
+                local dx = v - frame_data[k]
+                frame_data[k] = v
+                for _, child in ipairs(frame.childs) do
+                    child.x = child.x + dx
+                end
+            elseif k == "y" then
+                local dy = v - frame_data[k]
+                frame_data[k] = v
+                for _, child in ipairs(frame.childs) do
+                    child.y = child.y + dy
+                end
+            elseif k == "zindex" then
+                frame_data[k] = v
+                table.insert(zIndexs, v)
+                for _, child in ipairs(frame.childs) do
+                    child.zindex = v
+                end
+            else
+                rawset(t, k, v)
+            end
+        end
+    }
+    setmetatable(frame, metatable)
+    table.insert(elements, frame)
+    table.insert(zIndexs, frame.zindex)
+    return frame
+end
 function BetterElements:newLoadBar(canvas,tbl)
     if type(tbl) ~= "table" then
         error("TypeError: bad argument #1 to 'newLoadBar' (table expected, got "..type(tbl)..")")
@@ -473,6 +459,7 @@ function BetterElements:newLoadBar(canvas,tbl)
     loadbar.onLeave = tbl.onLeave or function() end
     loadbar.onClick = tbl.onClick or function() end
     loadbar.onChanged = tbl.onChanged or function() end
+    loadbar.onMouseUp = tbl.onMouseUp or function() end
     loadbar.transparency = tbl.transparency or 0
     loadbar.userCanChange = tbl.userCanChange or false;
     loadbar.userChanging = false;
@@ -508,6 +495,7 @@ function BetterElements:newRotatedLoadBar(canvas,tbl)
     loadbar.onLeave = tbl.onLeave or function() end
     loadbar.onClick = tbl.onClick or function() end
     loadbar.onChanged = tbl.onChanged or function() end
+    loadbar.onMouseUp = tbl.onMouseUp or function() end
 
     loadbar.userCanChange = tbl.userCanChange or false;
     loadbar.userChanging = false;
@@ -515,6 +503,138 @@ function BetterElements:newRotatedLoadBar(canvas,tbl)
     table.insert(elements,loadbar)
     table.insert(zIndexs,loadbar.zindex)
     return loadbar
+end
+
+
+
+function BetterElements:setBorder(element,tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'setBorder' (table expected, got "..type(tbl)..")")
+    end
+    if not element.type then
+        error("TypeError: bad argument #1 to 'setBorder' (BetterElement_Element expected, got "..type(element)..")")
+    end
+    local border = {}
+    border.color = tbl.color or 0x000000FF
+    border.thickness = tbl.thickness or 1
+    border.element = element
+    element.border = border
+    border.type = "BetterElement_Border"
+    border.transparency = tbl.transparency or 0
+    border.zindex = element.zindex
+    if tbl.visible == nil then
+        tbl.visible = true
+    end
+    border.visible = tbl.visible
+    table.insert(elements,border)
+    return border
+end
+
+
+
+function BetterElements:setShadow(element,tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'setBorder' (table expected, got "..type(tbl)..")")
+    end
+    if not element.type then
+        error("TypeError: bad argument #1 to 'setBorder' (BetterElement_Element expected, got "..type(element)..")")
+    end
+    local shadow = {}
+    shadow.color = tbl.color or 0x000000FF
+    shadow.transparency = tbl.transparency or 0
+    shadow.thickness = tbl.thickness or 1
+    shadow.element = element
+    if shadow.element.type == "BetterElement_Border" then
+        error("TypeError: bad argument #1 to 'setBorder' (BetterElement_Border can't have shadow)")
+    end
+    element.shadow = shadow
+    shadow.offsetX = tbl.offsetX or 0
+    shadow.offsetY = tbl.offsetY or 0
+    shadow.type = "BetterElement_Shadow"
+    if tbl.visible == nil then
+        tbl.visible = true
+    end
+    shadow.visible = tbl.visible
+    table.insert(elements,shadow)
+    return shadow
+end
+
+local function checkIfElementUnderOtherElements(element)
+    local zIndexOfElement = element.zindex
+    for i, v in ipairs(elements) do
+        if v ~= element then
+            if v.width and v.height then
+            if v.type ~= "BetterElement_Border" and v.type ~= "BetterElement_Shadow" and v.type ~= "BetterElement_Label" then
+            if v.x < element.x + element.width and v.x + v.width > element.x and v.y < element.y + element.height and v.y + v.height > element.y and v.zindex > zIndexOfElement then
+                return true
+            end
+        end
+            end
+        end
+    end
+    return false
+end
+local function isMouseOnHitBox(x,y,window,obj)
+    if checkIfElementUnderOtherElements(obj) then
+        return false
+    end
+    local windowx,windowy,windoww,windowh = window.x,window.y,window.width,window.height
+    local mousexaccordingToWindow,mouseyaccordingToWindow = x - windowx,y - windowy
+    local mousex,mousey = x,y
+    local hitboxx,hitboxy,hitboxw,hitboxh = obj.x,obj.y,obj.width,obj.height
+    if mousex > windowx and mousex < windowx + windoww and mousey > windowy and mousey < windowy + windowh then
+        if hitboxx < mousexaccordingToWindow and hitboxx + hitboxw > mousexaccordingToWindow and hitboxy < mouseyaccordingToWindow and hitboxy + hitboxh > mouseyaccordingToWindow then
+            return true
+        end
+    end
+    return false
+end
+
+function BetterElements:addToPaint(func)
+    module_config.extraOnPaintFunc = func
+end
+
+function BetterElements:Destroy(element)
+    for i, v in ipairs(elements) do
+        if v == element then
+            table.remove(elements,i)
+        end
+    end
+end
+
+function BetterElements:resize(element,tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'resize' (table expected, got "..type(tbl)..")")
+    end
+    if not element.type then
+        error("TypeError: bad argument #1 to 'resize' (BetterElement_Element expected, got "..type(element)..")")
+    end
+    if element.width and element.height then
+        if tbl.width and tbl.height then
+    element.width = tbl.width
+    element.height = tbl.height
+        end
+    end
+end
+
+function BetterElements:move(element,tbl)
+    if type(tbl) ~= "table" then
+        error("TypeError: bad argument #1 to 'move' (table expected, got "..type(tbl)..")")
+    end
+    if not element.type then
+        error("TypeError: bad argument #1 to 'move' (BetterElement_Element expected, got "..type(element)..")")
+    end
+    if element.x and element.y then
+        if tbl.x and tbl.y then
+    element.x = tbl.x
+    element.y = tbl.y
+        end
+    end
+end
+
+function BetterElements:isMouseOnElement(window,obj)
+    local x,y = ui.mousepos()
+    return isMouseOnHitBox(x,y,window,obj)
 end
 
 function  BetterElements:newImage(canvas,tbl)
@@ -555,105 +675,6 @@ function  BetterElements:newImage(canvas,tbl)
     table.insert(zIndexs,image.zindex)
     return image
 end
-
-function BetterElements:setBorder(element,tbl)
-    if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'setBorder' (table expected, got "..type(tbl)..")")
-    end
-    if not element.type then
-        error("TypeError: bad argument #1 to 'setBorder' (BetterElement_Element expected, got "..type(element)..")")
-    end
-    local border = {}
-    border.color = tbl.color or 0x000000FF
-    border.thickness = tbl.thickness or 1
-    border.element = element
-    element.border = border
-    border.type = "BetterElement_Border"
-    border.transparency = tbl.transparency or 0
-    border.zindex = element.zindex
-    if tbl.visible == nil then
-        tbl.visible = true
-    end
-    border.visible = tbl.visible
-    table.insert(elements,border)
-    return border
-end
-
-function BetterElements:setShadow(element,tbl)
-    if type(tbl) ~= "table" then
-        error("TypeError: bad argument #1 to 'setBorder' (table expected, got "..type(tbl)..")")
-    end
-    if not element.type then
-        error("TypeError: bad argument #1 to 'setBorder' (BetterElement_Element expected, got "..type(element)..")")
-    end
-    local shadow = {}
-    shadow.color = tbl.color or 0x000000FF
-    shadow.transparency = tbl.transparency or 0
-    shadow.thickness = tbl.thickness or 1
-    shadow.element = element
-    if shadow.element.type == "BetterElement_Border" then
-        error("TypeError: bad argument #1 to 'setBorder' (BetterElement_Border can't have shadow)")
-    end
-    element.shadow = shadow
-    shadow.offsetX = tbl.offsetX or 0
-    shadow.offsetY = tbl.offsetY or 0
-    shadow.type = "BetterElement_Shadow"
-    if tbl.visible == nil then
-        tbl.visible = true
-    end
-    shadow.visible = tbl.visible
-    table.insert(elements,shadow)
-    return shadow
-end
-
-local function checkIfElementUnderOtherElements(element)
-    local zIndexOfElement = element.zindex
-    for i, v in ipairs(elements) do
-        if v ~= element then
-            if v.width and v.height then
-            if v.type ~= "BetterElement_Border" then
-            if v.x < element.x + element.width and v.x + v.width > element.x and v.y < element.y + element.height and v.y + v.height > element.y and v.zindex > zIndexOfElement then
-                return true
-            end
-        end
-            end
-        end
-    end
-    return false
-end
-local function isMouseOnHitBox(x,y,window,obj)
-    if checkIfElementUnderOtherElements(obj) then
-        return false
-    end
-    local windowx,windowy,windoww,windowh = window.x,window.y,window.width,window.height
-    local mousexaccordingToWindow,mouseyaccordingToWindow = x - windowx,y - windowy
-    local mousex,mousey = x,y
-    local hitboxx,hitboxy,hitboxw,hitboxh = obj.x,obj.y,obj.width,obj.height
-    if mousex > windowx and mousex < windowx + windoww and mousey > windowy and mousey < windowy + windowh then
-        if hitboxx < mousexaccordingToWindow and hitboxx + hitboxw > mousexaccordingToWindow and hitboxy < mouseyaccordingToWindow and hitboxy + hitboxh > mouseyaccordingToWindow then
-            return true
-        end
-    end
-    return false
-end
-
-function BetterElements:isMouseOnElement(window,obj)
-    local x,y = ui.mousepos()
-    return isMouseOnHitBox(x,y,window,obj)
-end
-
-function BetterElements:addToPaint(func)
-    module_config.extraOnPaintFunc = func
-end
-
-function BetterElements:Destroy(element)
-    for i, v in ipairs(elements) do
-        if v == element then
-            table.remove(elements,i)
-        end
-    end
-end
-
 function BetterElements:newCanvas(window,tbl)
     if type(tbl) ~= "table" then
         error("TypeError: bad argument #1 to 'newCanvas' (table expected, got "..type(tbl)..")")
@@ -664,6 +685,70 @@ function BetterElements:newCanvas(window,tbl)
     canvas.type = "BetterElement_Canvas"
     canvas:show()
 
+  
+    function canvas:onClick()
+        for k,v in pairs(elements) do
+            if v.type == "BetterElement_Image" then
+                local mousex,mousey = ui.mousepos()
+                if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
+                    v.onClick()
+                end
+            end
+            if v.type == "BetterElement_Frame" then
+                if v.visible then
+                    local mousex, mousey = ui.mousepos()
+                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                        v.onClick()
+                    end
+                end
+            end
+            if v.type == "BetterElement_Button" then
+                local mousex,mousey = ui.mousepos()
+                if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
+                    v.onClick()
+                end
+            end
+            if v.type == "BetterElement_CheckBox" then
+                if v.visible then
+                    local mousex,mousey = ui.mousepos()
+                    if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
+                        v.checked = not v.checked
+                        v.onClick()
+                    end
+                end
+            end
+            if v.type == "BetterElement_IconButton" then
+                if v.visible then
+                    local mousex,mousey = ui.mousepos()
+                    if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
+                        v.onClick()
+                    end
+                end
+            end
+            if v.type == "BetterElement_LoadBar" then
+                if v.visible then
+                    local mousex, mousey = ui.mousepos()
+                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                        v.onClick()
+                        if v.userCanChange then
+                            v.userChanging = true
+                        end
+                    end
+                end
+            end
+            if v.type == "BetterElement_RotatedLoadBar" then
+                if v.visible then
+                    local mousex, mousey = ui.mousepos()
+                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                        v.onClick()
+                        if v.userCanChange then
+                            v.userChanging = true
+                        end
+                    end
+                end
+            end
+        end
+    end
     function canvas:onPaint()
         module_config.extraOnPaintFunc(elements)
         self:clear(canvas.bgcolor)
@@ -710,6 +795,7 @@ function BetterElements:newCanvas(window,tbl)
                     end
                     end
                 end
+
                 if v.type == "BetterElement_Image" then
                     if v.visible then
                         local Image = canvas:Image(v.image)
@@ -736,31 +822,20 @@ function BetterElements:newCanvas(window,tbl)
                         end
                         v.color = transparencyForColor(v.color,v.transparency)
                         drawRectangle(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.color)
-                        local oldFontSettings = {
-                            font = canvas.font;
-                            fontsize = canvas.fontsize;
-                            fontstyle = canvas.fontstyle;
-                            fontweight = canvas.fontweight
-                        }
-                        canvas.font = v.font;
-                        canvas.fontsize = v.fontsize;
-                        canvas.fontstyle = v.fontstyle;
-                        canvas.fontweight = v.fontweight;
                         local text = v.text
                         local size = self:measure(text)
+                        canvas.font = v.font
+                        canvas.fontsize = v.fontsize
+                        canvas.fontstyle = v.fontstyle
+                        canvas.fontweight = v.fontweight
                         local middleOfButtonXforText, middleOfButtonYforText = v.x + v.width/2, v.y + v.height/2
                         v.textcolor = transparencyForColor(v.textcolor,v.transparency)
                         self:print(text, middleOfButtonXforText - size.width/2, middleOfButtonYforText - size.height/2, v.textcolor)
-                        canvas.font = oldFontSettings.font;
-                        canvas.fontsize = oldFontSettings.fontsize;
-                        canvas.fontstyle = oldFontSettings.fontstyle;
-                        canvas.fontweight = oldFontSettings.fontweight;
                         if v.border then
                             if  v.border.visible then
                             v.border.color = transparencyForColor(v.border.color,v.border.transparency)
                             drawBorder(canvas, v.x, v.y, v.width, v.height, v.radius, v.radius, v.border.color, v.border.thickness)
                         end
-        
                     end
                     end
                 end
@@ -915,8 +990,12 @@ function BetterElements:newCanvas(window,tbl)
     end
 end
 end
-    function canvas:onMouseUp()
+
+
+
+function canvas:onMouseUp()
         for k,v in pairs(elements) do
+            if v.type ~= "BetterElement_Label" then
             if v.type == "BetterElement_LoadBar" then
                 if v.visible then
                     v.userChanging = false
@@ -927,71 +1006,18 @@ end
                     v.userChanging = false
                 end
             end
-        end
-    end
-    function canvas:onClick()
-        for k,v in pairs(elements) do
-            if v.type == "BetterElement_Image" then
-                local mousex,mousey = ui.mousepos()
-                if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
-                    v.onClick()
-                end
+            local mousex, mousey = ui.mousepos()
+            if v.visible then
+                if v.type ~= "BetterElement_Border" and v.type ~= "BetterElement_Shadow" then
+            if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
+                v.onMouseUp()
             end
-            if v.type == "BetterElement_Frame" then
-                if v.visible then
-                    local mousex, mousey = ui.mousepos()
-                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
-                        v.onClick()
-                    end
-                end
-            end
-            if v.type == "BetterElement_Button" then
-                local mousex,mousey = ui.mousepos()
-                if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
-                    v.onClick()
-                end
-            end
-            if v.type == "BetterElement_CheckBox" then
-                if v.visible then
-                    local mousex,mousey = ui.mousepos()
-                    if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
-                        v.checked = not v.checked
-                        v.onClick()
-                    end
-                end
-            end
-            if v.type == "BetterElement_IconButton" then
-                if v.visible then
-                    local mousex,mousey = ui.mousepos()
-                    if isMouseOnHitBox(mousex,mousey,mainWindow,v) then
-                        v.onClick()
-                    end
-                end
-            end
-            if v.type == "BetterElement_LoadBar" then
-                if v.visible then
-                    local mousex, mousey = ui.mousepos()
-                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
-                        v.onClick()
-                        if v.userCanChange then
-                            v.userChanging = true
-                        end
-                    end
-                end
-            end
-            if v.type == "BetterElement_RotatedLoadBar" then
-                if v.visible then
-                    local mousex, mousey = ui.mousepos()
-                    if isMouseOnHitBox(mousex, mousey, mainWindow, v) then
-                        v.onClick()
-                        if v.userCanChange then
-                            v.userChanging = true
-                        end
-                    end
-                end
             end
         end
+        end
+        end
     end
+   
     function canvas:onHover()
         local cursorSet = false
         local mousex, mousey = ui.mousepos()
