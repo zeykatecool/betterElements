@@ -597,6 +597,11 @@ end
 function BetterElements:Destroy(element)
     for i, v in ipairs(elements) do
         if v == element then
+            if v.type == "BetterElement_Frame" then
+                for a,b in ipairs(v.childs) do
+                    BetterElements:Destroy(b)
+                end
+            end
             table.remove(elements,i)
         end
     end
