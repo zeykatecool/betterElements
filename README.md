@@ -14,10 +14,11 @@
 + `Image`
 + `Border`
 + `Shadow`
++ `ListLayout`
 
 > 💡 Tip: CheckBoxes can be used like RadioButtons.
 
-> ⚠️ Warning: `Border` and `Shadow` is not actual Elements.It attaches to Elements.
+> ⚠️ Warning: `Border`,`ListLayout` and `Shadow` is not actual Elements.It attaches to Elements.
 
 >Example:
 ```lua
