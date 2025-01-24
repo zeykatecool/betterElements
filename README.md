@@ -1,3 +1,10 @@
+# Project Status: Archived
+
+This repository is no longer maintained. 
+
+I am focusing on a new project, [**betterUI**](https://github.com/zeykatecool/betterUI) which is much better than this module. 
+Feel free to explore this repository, but i will not update this project.
+
 # Better Elements for LuaRT
 - This module is made for making better elements for [LuaRT](https://github.com/samyeyo/LuaRT/tree/v1.8.0).
 - It uses `canvas` module for creating new and better elements.
